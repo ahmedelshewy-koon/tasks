@@ -7,7 +7,7 @@
     "dev": "next dev --hostname 127.0.0.1 --port 3107",
     "dev:lan": "next dev --hostname 0.0.0.0 --port 3107",
     "build": "next build",
-    "start": "next start --hostname 127.0.0.1 --port 3107",
+    "start": "node scripts/start.mjs",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
@@ -29,6 +29,7 @@
     "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
+    "tsx": "^4.23.15",
     "zod": "^4.6.5"
   },
   "devDependencies": {
@@ -39,7 +40,6 @@
     "@types/react-dom": "^19.3.0",
     "drizzle-kit": "^0.31.11",
     "prettier": "^3.9.9",
-    "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vitest": "^5.0.3"
   },

@@ -10,3 +10,8 @@ playwright-report/
 *.log
 
 KOON-Certificate-English.pdf
+
+*.pem
+*.key
+*.sql.gz
+backups/

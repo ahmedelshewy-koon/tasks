@@ -57,12 +57,12 @@ HR dashboard integration: HR now displays **My tasks / مهامي** using its ex
 
 Set `TASK_APP_URL` in the HR environment to the TASK server origin. Local HR development defaults to `http://127.0.0.1:3107`; production requires an explicit HTTPS origin reachable by HR and employees' browsers. This bridge is disabled in TASK's local fixture identity mode. Both services must be running.
 
-1. Provision PostgreSQL, then configure `.env.example` values in your deployment secret store. Set `TASK_AUTH_MODE=hr`, `DATABASE_URL`, `HR_API_URL`, `TASK_ORIGIN` (the public HTTPS origin, no trailing slash), and a random `SESSION_SECRET` of at least 32 characters.
+1. Provision PostgreSQL, run `npm ci` and `npm run build`, then configure the required `.env.example` values in your deployment secret store: `DATABASE_URL`, `HR_API_URL` (HTTPS), `TASK_ORIGIN` (the exact public HTTPS origin, no trailing slash; production rejects all browser writes without it), a random `SESSION_SECRET` of at least 32 characters, and `CRON_SECRET`.
 2. Set `TASK_BOOTSTRAP_ADMINS` to the HR user ID of the first admin. This applies only when no TASK admins exist. Later grants are managed inside TASK.
 3. Run `npm run db:migrate` with `DATABASE_URL` in the process environment. Run migrations once, before starting app replicas. The script uses a dedicated connection and a migration ledger.
-4. Run `npm run build` and `npm start` behind an HTTPS reverse proxy. Start binds to localhost; configure the process/container networking for your host. Do not use local development identities in production.
+4. Run `npm start` behind an HTTPS reverse proxy (the public site must use HTTPS). It binds `0.0.0.0` on port 3107; set `PORT` to override. Migrations never run on startup. Do not use local development identities in production.
 5. Configure a scheduler to POST `/api/jobs/due` every 5 minutes, with `Authorization: Bearer <CRON_SECRET>`. No emails are sent. Date-only deadlines are the end of the due date in Africa/Cairo. Reminders default to 24 hours before that instant, with 1-hour and 3-day options. The scheduler and workspace reads share the same calculation and unique notification key (recipient/task/kind/due date); changing a reminder does not resend a notification already delivered for that due date. Opening the workspace also reconciles due reminders for the current user.
-6. Configure database backups and a reverse-proxy request limit (11 MiB). Attachments are stored as database bytes, limited to 10 MiB each, and downloaded only after permission checks as `application/octet-stream`. Add malware scanning if required by your deployment's file policy.
+6. Configure database backups and a reverse-proxy request body limit of at least 11 MB. Attachments are stored as database bytes, limited to 10 MiB each, and downloaded only after permission checks as `application/octet-stream`. Add malware scanning if required by your deployment's file policy.
 
 Changing the session secret invalidates all sessions. Treat HR availability as an authentication dependency: authorization fails closed if HR is unavailable. An HR 401 clears the TASK session and returns the user to sign-in.
 
