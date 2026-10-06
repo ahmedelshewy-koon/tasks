@@ -1,0 +1,150 @@
+/*
+ * Sanaa design tokens for Tasks.
+ * The shared --sana-* palette lives in sana-tokens.css (a copy of HR's
+ * sana-tokens.css), so both products read from one source. The type scale
+ * mirrors HR's sana-theme.css. The --ds-* names below keep the existing Tasks
+ * token vocabulary but resolve to the shared Sanaa values, so component
+ * stylesheets never carry their own colors.
+ */
+:root {
+  /* ---- Type scale (HR typography.css / sana-theme.css) ---- */
+  --font-enterprise: "Alexandria", "IBM Plex Sans Arabic", sans-serif;
+  --type-page: 24px;
+  --type-section: 20px;
+  --type-component: 16px;
+  --type-body: 14px;
+  --type-secondary: 13px;
+  --type-label: 12px;
+  --type-nav: 14px;
+  --type-kpi: 24px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+  --leading-heading: 1.4;
+  --leading-body: 1.6;
+
+  /* ---- Tasks token names, resolved to Sanaa values ---- */
+  /* Neutrals */
+  --ds-white: var(--sana-white);
+  --ds-bg: var(--sana-canvas);
+  --ds-cream: var(--sana-canvas);
+  --ds-sand: var(--sana-canvas-warm);
+  --ds-gray-50: var(--sana-line);
+  --ds-gray-100: #e7e7e7;
+  --ds-gray-200: #dddddd;
+  --ds-gray-300: var(--sana-disabled);
+  --ds-gray-400: #7e7e7e;
+  --ds-gray-500: var(--sana-muted);
+  --ds-gray-600: #646464;
+  --ds-slate: var(--sana-muted);
+  --ds-ink: var(--sana-ink);
+  --ds-black: #000000;
+
+  /* Brand */
+  --ds-mint-50: #d9fbf3;
+  --ds-mint-100: #a1ecdd;
+  --ds-mint-200: #95e0d1;
+  --ds-green-300: #79cbaa;
+  --ds-green-350: #79cbaa;
+  --ds-teal-400: #5d9f92;
+  --ds-accent: var(--sana-teal-mid);
+  --ds-green-700: var(--sana-teal-mid);
+  --ds-green-800: #08392f;
+  --ds-green-900: var(--sana-teal);
+  --ds-dark-700: #212f2f;
+  --ds-dark-800: #111b1b;
+  --ds-dark-900: #031212;
+  --ds-dark-950: #031212;
+
+  --ds-gradient-primary: var(--sana-button);
+  --ds-gradient-primary-rtl: var(--sana-button);
+  --ds-gradient-deep: var(--sana-button);
+  --ds-gradient-night: var(--sana-sidebar);
+
+  /* Status: restrained tones; text uses the -strong variants for contrast. */
+  --ds-success: var(--sana-success);
+  --ds-success-strong: #0b4237;
+  --ds-success-soft: var(--sana-success-bg);
+  --ds-warning: var(--sana-warning);
+  --ds-warning-strong: #9a5e08;
+  --ds-warning-soft: var(--sana-warning-bg);
+  --ds-danger: var(--sana-danger);
+  --ds-danger-border: var(--sana-danger);
+  --ds-danger-strong: var(--sana-danger);
+  --ds-danger-soft: var(--sana-danger-bg);
+  /* Info / purple / navy had no place in the Sanaa palette: they now use teal and ink. */
+  --ds-info: var(--sana-teal-mid);
+  --ds-info-soft: var(--sana-canvas);
+  --ds-info-strong: var(--sana-teal);
+  --ds-purple: var(--sana-teal-mid);
+  --ds-purple-soft: var(--sana-canvas);
+  --ds-navy: var(--sana-ink);
+  --ds-navy-soft: var(--sana-canvas);
+  --ds-neutral: var(--sana-muted);
+  --ds-neutral-soft: var(--sana-canvas);
+
+  /* Typography */
+  --ds-font-latin: var(--font-enterprise);
+  --ds-font-arabic: var(--font-enterprise);
+  --ds-text-display: 40px;
+  --ds-text-h1: 32px;
+  --ds-text-h2: 24px;
+  --ds-text-h3: 20px;
+  --ds-text-h4: 16px;
+  --ds-text-body: 14px;
+  --ds-text-small: 13px;
+  --ds-text-caption: 12px;
+  --ds-weight-regular: 400;
+  --ds-weight-medium: 500;
+  --ds-weight-bold: 600;
+
+  /* Spacing */
+  --ds-space-1: 4px;
+  --ds-space-2: 8px;
+  --ds-space-3: 12px;
+  --ds-space-4: 16px;
+  --ds-space-5: 24px;
+  --ds-space-6: 32px;
+  --ds-space-7: 48px;
+  --ds-space-8: 64px;
+  --ds-grid-columns: 12;
+  --ds-grid-margin: 24px;
+  --ds-grid-gutter: 24px;
+
+  /* Radius */
+  --ds-radius-xs: 8px;
+  --ds-radius-sm: 12px;
+  --ds-radius-md: 16px;
+  --ds-radius-lg: 16px;
+  --ds-radius-xl: var(--sana-radius-card);
+  --ds-radius-pill: var(--sana-radius-pill);
+
+  /* Elevation */
+  --ds-shadow-sm: var(--sana-shadow);
+  --ds-shadow-card: var(--sana-shadow);
+  --ds-shadow-raised: var(--sana-shadow-popover);
+  --ds-focus-ring: 0 0 0 2px color-mix(in srgb, var(--sana-teal-mid) 35%, transparent);
+
+  /* Control sizes */
+  --ds-control-lg: 56px;
+  --ds-control-md: 48px;
+  --ds-control-sm: 40px;
+  --ds-control-xs: 32px;
+
+  /* Legacy aliases used across the app */
+  --nav: var(--sana-teal);
+  --nav-dark: var(--sana-ink);
+  --teal: var(--sana-teal-mid);
+  --teal-soft: var(--ds-mint-50);
+  --bg: var(--sana-canvas);
+  --surface: var(--sana-white);
+  --ink: var(--sana-ink);
+  --muted: var(--sana-muted);
+  --border: var(--sana-line);
+  --radius: var(--sana-radius-card);
+  --rose: var(--sana-danger);
+  --amber: var(--sana-warning);
+  --shadow: var(--sana-shadow);
+  color-scheme: light;
+}

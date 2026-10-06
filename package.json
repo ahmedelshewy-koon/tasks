@@ -1,0 +1,51 @@
+{
+  "name": "sana-task",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev --hostname 127.0.0.1 --port 3107",
+    "dev:lan": "next dev --hostname 0.0.0.0 --port 3107",
+    "build": "next build",
+    "start": "next start --hostname 127.0.0.1 --port 3107",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx scripts/migrate.ts",
+    "setup:local": "node scripts/setup-local.mjs",
+    "test:api": "node scripts/smoke-api.mjs",
+    "format": "prettier --write src tests scripts docs README.md *.ts *.json"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "^0.5.8",
+    "@fontsource/ibm-plex-sans-arabic": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@tanstack/react-query": "^5.104.1",
+    "drizzle-orm": "^0.45.3",
+    "jose": "^6.2.12",
+    "lucide-react": "^1.52.0",
+    "next": "^16.3.8",
+    "pg": "^8.23.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^26.6.4",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "drizzle-kit": "^0.31.11",
+    "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.3"
+  },
+  "overrides": {
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    }
+  }
+}

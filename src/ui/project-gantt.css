@@ -1,0 +1,297 @@
+/* Project Gantt: sticky task column and header over a scrolling timeline.
+   Tokens only; logical properties so the timeline runs right-to-left in Arabic. */
+.gantt-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+}
+.gantt-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: var(--ds-text-caption);
+  color: var(--muted);
+}
+.gantt-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gantt-swatch {
+  width: 18px;
+  height: 8px;
+  border-radius: var(--ds-radius-pill);
+}
+.gantt-scale button {
+  padding-block: 6px;
+}
+.gantt-scroll {
+  overflow: auto;
+  max-height: 70vh;
+}
+.gantt-grid {
+  position: relative;
+  min-width: 100%;
+}
+.gantt-head {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  background: var(--ds-white);
+  border-bottom: 1px solid var(--border);
+}
+.gantt-name {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 2;
+  flex: 0 0 var(--gantt-name);
+  width: var(--gantt-name);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 16px;
+  background: var(--ds-white);
+  border-inline-end: 1px solid var(--border);
+  font-size: var(--ds-text-small);
+  min-width: 0;
+}
+.gantt-corner {
+  font-weight: 600;
+  color: var(--muted);
+}
+.gantt-scale-head {
+  position: relative;
+  flex: none;
+}
+.gantt-months,
+.gantt-days {
+  position: relative;
+  height: 26px;
+}
+.gantt-days {
+  border-top: 1px solid var(--border);
+}
+.gantt-months span,
+.gantt-days span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: var(--ds-text-caption);
+  color: var(--muted);
+}
+.gantt-months span {
+  padding-inline: 8px;
+  font-weight: 600;
+  color: var(--ink);
+  border-inline-start: 1px solid var(--border);
+}
+.gantt-days span {
+  justify-content: center;
+}
+.gantt-days span.is-today {
+  color: var(--ds-white);
+  font-weight: 600;
+}
+.gantt-days span.is-today::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: var(--ds-green-700);
+  z-index: -1;
+}
+.gantt-body {
+  position: relative;
+}
+.gantt-row {
+  display: flex;
+  height: var(--gantt-row);
+  border-bottom: 1px solid var(--ds-gray-50);
+}
+.gantt-track {
+  position: relative;
+  flex: none;
+  /* A line at the start of every week; the width is whole weeks, so it lines up both ways. */
+  background-image: linear-gradient(
+    to var(--gantt-axis, right),
+    var(--ds-gray-50) 1px,
+    transparent 1px
+  );
+  background-size: var(--gantt-week) 100%;
+}
+[dir="rtl"] .gantt-track {
+  --gantt-axis: left;
+  background-position: right;
+}
+.gantt-section .gantt-name,
+.gantt-section .gantt-track {
+  background-color: var(--ds-bg);
+}
+.gantt-section .gantt-name {
+  font-weight: 600;
+  font-size: var(--ds-text-caption);
+  color: var(--muted);
+  letter-spacing: 0.3px;
+}
+.gantt-task-name {
+  border: 0;
+  border-bottom: 0;
+  text-align: start;
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--ds-text-small);
+}
+.gantt-task-name span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gantt-task-name:hover span {
+  color: var(--teal);
+  text-decoration: underline;
+}
+.gantt-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.gantt-swatch.todo,
+.gantt-dot.todo,
+.gantt-bar.todo {
+  background: var(--sana-disabled);
+}
+.gantt-swatch.in_progress,
+.gantt-dot.in_progress,
+.gantt-bar.in_progress {
+  background: var(--sana-chart-2);
+}
+.gantt-swatch.done,
+.gantt-dot.done,
+.gantt-bar.done {
+  background: var(--sana-chart-1);
+}
+.gantt-swatch.overdue,
+.gantt-bar.overdue {
+  background: var(--ds-danger);
+}
+.gantt-bar {
+  position: absolute;
+  top: 9px;
+  bottom: 9px;
+  border: 0;
+  padding: 0;
+  border-radius: var(--ds-radius-pill);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  box-shadow: var(--ds-shadow-sm);
+}
+.gantt-bar:hover {
+  filter: brightness(0.94);
+}
+.gantt-bar:focus-visible {
+  outline: none;
+  box-shadow: var(--ds-focus-ring);
+}
+.gantt-progress {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background: rgb(0 0 0 / 0.18);
+}
+.gantt-bar.done .gantt-progress {
+  display: none;
+}
+.gantt-bar-label {
+  position: relative;
+  padding-inline: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ds-white);
+}
+.gantt-bar.todo .gantt-bar-label {
+  color: var(--ds-gray-600);
+}
+.gantt-bar.undated {
+  background: transparent;
+  border: 2px dashed var(--ds-gray-300);
+  box-shadow: none;
+}
+.gantt-links {
+  position: absolute;
+  top: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.gantt-links path {
+  fill: none;
+  stroke: var(--ds-gray-400);
+  stroke-width: 1.5;
+}
+.gantt-links path.conflict {
+  stroke: var(--ds-danger);
+  stroke-dasharray: 4 3;
+}
+.gantt-milestone-row .gantt-name {
+  font-weight: 600;
+  font-size: var(--ds-text-caption);
+  color: var(--muted);
+}
+.gantt-milestone {
+  position: absolute;
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translate(-6px, -50%);
+  white-space: nowrap;
+  font-size: var(--ds-text-caption);
+  color: var(--ink);
+}
+[dir="rtl"] .gantt-milestone {
+  transform: translate(6px, -50%);
+}
+.gantt-milestone i {
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  border-radius: 2px;
+  background: var(--ds-purple);
+}
+.gantt-milestone.completed i {
+  background: var(--ds-green-700);
+}
+.gantt-milestone em {
+  font-style: normal;
+}
+.gantt-diamond-icon {
+  color: var(--ds-purple);
+  fill: currentColor;
+}
+.gantt-today {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-inline-start: -1px;
+  background: var(--ds-green-700);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 1;
+}

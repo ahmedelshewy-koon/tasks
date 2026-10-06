@@ -1,0 +1,143 @@
+.feature-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+.feature-stack fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+}
+.feature-stack select,
+.feature-stack input:not([type="checkbox"]),
+.feature-stack textarea,
+.report-filters input:not([type="checkbox"]),
+.report-filters select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--sana-line);
+  border-radius: var(--sana-radius-control);
+  padding: 0 var(--sana-space-4);
+  min-height: var(--ds-control-sm);
+  background: var(--sana-white);
+  color: var(--sana-ink);
+  font: inherit;
+}
+.feature-stack textarea {
+  padding-block: var(--sana-space-3);
+}
+.feature-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.feature-row > input:not([type="checkbox"]) {
+  flex: 1;
+  min-width: 110px;
+}
+.feature-row > strong {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.checklist-row {
+  flex-wrap: nowrap;
+}
+.checklist-row input[type="checkbox"] {
+  flex: 0 0 auto;
+}
+.checklist-done {
+  text-decoration: line-through;
+  color: var(--ds-slate);
+}
+.blocked-badge {
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning-strong);
+  margin-inline-start: 6px;
+}
+.milestone-panel {
+  padding: 20px;
+  margin-block: 12px;
+}
+.milestone-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 16px;
+}
+.milestone-card {
+  border: 1px solid var(--ds-gray-200);
+  border-inline-start: 3px solid var(--ds-warning);
+  background: var(--ds-cream);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-wrap: anywhere;
+}
+.milestone-calendar {
+  background: var(--ds-cream);
+  color: var(--ds-warning-strong);
+  border-inline-start: 3px solid var(--ds-warning);
+}
+.report-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(125px, 1fr));
+  gap: 12px;
+}
+.report-metrics strong {
+  display: block;
+  font-size: 28px;
+  margin-block-start: 8px;
+}
+.report-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+}
+.report-filters > label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.report-page details > summary {
+  cursor: pointer;
+  padding: 12px;
+}
+@media (max-width: 600px) {
+  .milestone-panel {
+    padding: 12px;
+  }
+  .checklist-row {
+    flex-wrap: wrap;
+  }
+  .report-filters > label {
+    flex: 1 1 140px;
+  }
+}
+@media print {
+  .sidebar,
+  .topbar,
+  .report-controls,
+  .report-print,
+  .mobile-nav-toggle {
+    display: none !important;
+  }
+  .main-shell {
+    margin: 0 !important;
+  }
+  .report-page {
+    color: var(--ds-dark-700);
+  }
+  .report-page .panel {
+    break-inside: avoid;
+  }
+  .report-page .table-wrap {
+    overflow: visible;
+  }
+}
+.feature-stack .search-field input:not([type="checkbox"]) {
+  padding-inline-start: 38px;
+}

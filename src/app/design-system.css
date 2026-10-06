@@ -1,0 +1,586 @@
+/*
+ * SANA design system — component layer.
+ * Loaded after globals.css so these rules define the final look.
+ * Tokens: --sana-* in sana-tokens.css, --ds-* aliases in design-tokens.css.
+ */
+
+/* ---------- Base & typography ---------- */
+body {
+  background: var(--ds-bg);
+  color: var(--ds-ink);
+  font-family: var(--ds-font-latin);
+  font-size: var(--ds-text-body);
+}
+html[dir="rtl"] body {
+  font-family: var(--ds-font-arabic);
+  font-size: var(--ds-text-body);
+}
+h1 {
+  font-size: var(--ds-text-h2);
+  font-weight: var(--ds-weight-bold);
+  letter-spacing: -0.4px;
+}
+h2 {
+  font-size: var(--ds-text-h4);
+  font-weight: var(--ds-weight-bold);
+}
+h3 {
+  font-size: var(--ds-text-body);
+  font-weight: var(--ds-weight-bold);
+}
+html[dir="rtl"] h1,
+html[dir="rtl"] h2 {
+  letter-spacing: 0;
+}
+a {
+  color: var(--ds-green-700);
+}
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ds-accent);
+  outline-offset: 2px;
+}
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--ds-green-900);
+}
+::selection {
+  background: var(--ds-mint-100);
+  color: var(--ds-ink);
+}
+
+/* ---------- Inputs (pill, 54px in the spec) ---------- */
+input:not([type="checkbox"]):not([type="file"]),
+select {
+  min-height: var(--ds-control-md);
+  padding: 0 var(--ds-space-5);
+  border: 1px solid var(--ds-gray-50);
+  border-radius: var(--sana-radius-control);
+  background: var(--ds-white);
+  color: var(--ds-ink);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+textarea {
+  padding: var(--ds-space-3) var(--ds-space-5);
+  border: 1px solid var(--ds-gray-50);
+  border-radius: var(--ds-radius-xl);
+  background: var(--ds-white);
+  color: var(--ds-ink);
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--ds-mint-200);
+}
+input:not([type="checkbox"]):not([type="radio"]):focus,
+select:focus,
+textarea:focus {
+  border-color: var(--ds-mint-100);
+  box-shadow: var(--ds-focus-ring);
+  outline: none;
+}
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"],
+.is-invalid input,
+.is-invalid textarea {
+  border-color: var(--ds-danger-border);
+}
+input:disabled,
+select:disabled,
+textarea:disabled {
+  background: var(--ds-gray-200);
+  border-color: var(--ds-gray-200);
+  color: var(--ds-gray-500);
+  cursor: not-allowed;
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--ds-gray-500);
+}
+.field > span,
+.field > label {
+  color: var(--ds-ink);
+  font-weight: var(--ds-weight-medium);
+}
+.login-form .login-input input {
+  min-height: var(--ds-control-lg);
+  border: 1px solid var(--ds-gray-50);
+  border-radius: var(--ds-radius-pill);
+  padding-inline: 48px;
+}
+.login-input > svg {
+  inset-inline-start: 20px;
+}
+.login-form .login-input input:focus {
+  border-color: var(--ds-mint-100);
+  outline: none;
+  box-shadow: var(--ds-focus-ring);
+}
+.password-toggle {
+  inset-inline-end: 8px;
+  border-radius: var(--ds-radius-pill);
+}
+.search-field input:not([type="checkbox"]) {
+  min-height: var(--ds-control-sm);
+  padding-inline: 38px var(--ds-space-4);
+}
+.filter-selects select {
+  min-height: var(--ds-control-sm);
+  padding: 0 28px 0 var(--ds-space-4);
+  color: var(--ds-green-900);
+}
+
+/* ---------- Buttons (pill, gradient primary) ---------- */
+.button {
+  min-height: 44px;
+  padding: 0 var(--ds-space-5);
+  border-radius: var(--ds-radius-pill);
+  font-size: var(--ds-text-small);
+  font-weight: var(--ds-weight-bold);
+  border: 1px solid transparent;
+  transition:
+    filter 0.15s,
+    background 0.15s,
+    box-shadow 0.15s;
+}
+.button.primary {
+  background: var(--ds-gradient-primary);
+  border-color: transparent;
+  color: var(--ds-white);
+}
+html[dir="rtl"] .button.primary {
+  background: var(--ds-gradient-primary-rtl);
+}
+.button.primary:hover {
+  background: var(--sana-hover);
+  filter: none;
+  box-shadow: none;
+}
+html[dir="rtl"] .button.primary:hover { background: var(--sana-hover); }
+.button.secondary {
+  background: var(--ds-cream);
+  border-color: var(--ds-green-900);
+  color: var(--ds-green-900);
+}
+.button.secondary:hover {
+  background: var(--sana-hover);
+  color: var(--sana-white);
+}
+.button.dark {
+  background: var(--ds-dark-800);
+  border-color: var(--ds-accent);
+  color: var(--ds-mint-100);
+}
+.button.dark:hover {
+  background: var(--ds-dark-700);
+}
+.button.danger {
+  background: var(--ds-danger);
+  border-color: var(--ds-danger);
+  color: var(--ds-white);
+}
+.button.danger:hover {
+  background: var(--ds-danger-strong);
+}
+.button:disabled,
+.button[aria-disabled="true"] {
+  background: var(--ds-gray-300);
+  border-color: var(--ds-gray-300);
+  color: var(--ds-gray-600);
+  filter: none;
+  box-shadow: none;
+  opacity: 1;
+}
+.button.large {
+  min-height: var(--ds-control-lg);
+  font-size: var(--ds-text-body);
+}
+.small-button,
+.button.small-button {
+  min-height: 36px;
+  padding: 0 var(--ds-space-4);
+  font-size: var(--ds-text-caption);
+}
+.login-form .button.full {
+  min-height: var(--ds-control-lg);
+  border-radius: var(--ds-radius-pill);
+  font-size: var(--ds-text-body);
+  box-shadow: 0 6px 16px rgb(4 72 53 / 0.2);
+}
+.text-button {
+  color: var(--ds-green-700);
+  font-weight: var(--ds-weight-bold);
+}
+.icon-button {
+  border-radius: var(--ds-radius-pill);
+  color: var(--ds-slate);
+}
+.icon-button:hover {
+  background: var(--ds-mint-50);
+  color: var(--ds-green-900);
+}
+
+/* ---------- Badges (pill, 22% tint) ---------- */
+.badge {
+  min-height: 24px;
+  padding: 3px var(--ds-space-3);
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-neutral-soft);
+  color: var(--ds-neutral);
+  font-size: var(--ds-text-caption);
+  font-weight: var(--ds-weight-bold);
+}
+.badge.success,
+.status-done {
+  background: var(--ds-success-soft);
+  color: var(--ds-success-strong);
+}
+.badge.warning,
+.status-in_progress {
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning-strong);
+}
+.badge.neutral,
+.status-todo {
+  background: var(--ds-neutral-soft);
+  color: var(--ds-gray-600);
+}
+.badge.danger {
+  background: var(--ds-danger-soft);
+  color: var(--ds-danger-strong);
+}
+.badge.info {
+  background: var(--ds-info-soft);
+  color: var(--ds-info-strong);
+}
+.badge.purple {
+  background: var(--ds-purple-soft);
+  color: var(--ds-purple);
+}
+.badge.navy {
+  background: var(--ds-navy-soft);
+  color: var(--ds-navy);
+}
+.priority-low {
+  color: var(--ds-gray-400);
+}
+.priority-medium {
+  color: var(--ds-info-strong);
+}
+.priority-high {
+  color: var(--ds-warning-strong);
+}
+.priority-urgent {
+  color: var(--ds-danger);
+}
+.status-fill-done {
+  background: var(--sana-chart-1);
+}
+.status-fill-in_progress {
+  background: var(--sana-chart-2);
+}
+.status-fill-todo {
+  background: var(--sana-chart-3);
+}
+.priority-fill-urgent {
+  background: var(--ds-danger);
+  stroke: var(--ds-danger);
+}
+.priority-fill-high {
+  background: var(--ds-warning);
+  stroke: var(--ds-warning);
+}
+.priority-fill-medium {
+  background: var(--ds-teal-400);
+  stroke: var(--ds-teal-400);
+}
+.priority-fill-low {
+  background: var(--ds-gray-300);
+  stroke: var(--ds-gray-300);
+}
+
+/* ---------- Cards & surfaces (24px radius) ---------- */
+.panel,
+.stat-card,
+.project-card,
+.settings-panel {
+  background: var(--ds-white);
+  border: 1px solid var(--ds-gray-100);
+  border-radius: var(--ds-radius-xl);
+  box-shadow: var(--ds-shadow-sm);
+}
+.panel.team-person {
+  border-radius: var(--ds-radius-xl);
+}
+.panel-header {
+  padding: var(--ds-space-5);
+  border-bottom-color: var(--ds-gray-100);
+}
+.panel-header p,
+.page-heading p {
+  color: var(--ds-slate);
+}
+.board-card {
+  border-radius: var(--ds-radius-lg);
+  border-color: var(--ds-gray-100);
+  box-shadow: var(--ds-shadow-sm);
+}
+.board-card:hover,
+.project-card:hover {
+  box-shadow: var(--ds-shadow-card);
+}
+.stat-card {
+  padding: var(--ds-space-5);
+}
+.stat-card > div > span:first-child {
+  color: var(--ds-slate);
+}
+.stat-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--ds-radius-md);
+}
+.stat-icon.teal {
+  background: var(--ds-mint-50);
+  color: var(--ds-green-700);
+}
+.stat-icon.gray {
+  background: var(--ds-neutral-soft);
+  color: var(--ds-gray-600);
+}
+.stat-icon.amber {
+  background: var(--ds-warning-soft);
+  color: var(--ds-warning-strong);
+}
+.stat-icon.green {
+  background: var(--ds-success-soft);
+  color: var(--ds-success-strong);
+}
+.stat-icon.rose {
+  background: var(--ds-danger-soft);
+  color: var(--ds-danger-strong);
+}
+.dialog,
+.modal,
+.login-form {
+  border-radius: var(--ds-radius-xl);
+  box-shadow: var(--ds-shadow-raised);
+  border-color: var(--ds-gray-100);
+}
+.drawer {
+  box-shadow: var(--ds-shadow-raised);
+}
+.mini-progress,
+.chart-track {
+  background: var(--ds-mint-50);
+  border-radius: var(--ds-radius-pill);
+}
+.mini-progress > span,
+.chart-fill,
+.chart-fill.teal {
+  background: var(--ds-green-700);
+  border-radius: var(--ds-radius-pill);
+}
+.empty-icon {
+  background: var(--ds-mint-50);
+  color: var(--ds-green-700);
+}
+
+/* ---------- Tabs ---------- */
+.tabs button {
+  color: var(--ds-slate);
+  font-weight: var(--ds-weight-medium);
+}
+.tabs button:hover {
+  color: var(--ds-green-900);
+}
+.tabs button.active {
+  color: var(--ds-green-900);
+  font-weight: var(--ds-weight-bold);
+}
+.tabs button.active:after {
+  height: 3px;
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-accent);
+}
+.tabs button > span {
+  border-radius: var(--ds-radius-pill);
+  background: var(--ds-mint-50);
+  color: var(--ds-green-900);
+}
+
+/* ---------- App shell ---------- */
+.sidebar {
+  background: var(--ds-green-900);
+  color: var(--ds-gray-200);
+}
+.nav-label {
+  color: var(--ds-mint-200);
+}
+.nav-item {
+  border-radius: var(--sana-radius-nav);
+  color: var(--ds-mint-50);
+}
+.nav-item svg {
+  color: var(--ds-mint-200);
+}
+.nav-item:hover {
+  background: rgb(255 255 255 / 0.06);
+  color: var(--ds-white);
+}
+.nav-item.active {
+  background: var(--sana-canvas);
+  box-shadow: none;
+  color: var(--sana-teal);
+}
+.nav-item.active svg {
+  color: inherit;
+}
+.nav-item.active:before {
+  display: none;
+}
+.profile-button small,
+.profile-button > svg {
+  color: var(--ds-mint-200);
+}
+.topbar {
+  background: rgb(255 255 255 / 0.85);
+  border-bottom-color: var(--ds-gray-100);
+  backdrop-filter: blur(8px);
+}
+.notification-button i {
+  background: var(--ds-danger);
+}
+.avatar {
+  background: var(--ds-mint-50);
+  color: var(--ds-green-900);
+}
+.avatar-stack .avatar:nth-child(3n + 2) {
+  background: var(--ds-cream);
+  color: var(--ds-green-700);
+}
+.avatar-stack .avatar:nth-child(3n) {
+  background: var(--ds-mint-100);
+  color: var(--ds-green-900);
+}
+
+/* ---------- Feedback ---------- */
+.error-box {
+  background: var(--ds-danger-soft);
+  border-color: var(--ds-danger-border);
+  color: var(--ds-danger-strong);
+  border-radius: var(--ds-radius-lg);
+}
+.overdue-text,
+.danger-text {
+  color: var(--ds-danger);
+}
+/* HR app/sana-theme.css adapted to existing Tasks selectors.
+   Keep Tasks' 800px navigation breakpoint in sync with its existing JS behavior. */
+html, body { background: var(--sana-page-bg) fixed var(--sana-page-start); }
+button, input, select, textarea { font-family: inherit; }
+.app-shell { padding: var(--sana-space-6); background: var(--sana-page-bg); }
+.app-shell .sidebar { width: 264px; background: transparent; border: 0; padding: var(--sana-space-4); }
+.app-shell .main-shell { margin-inline-start: 264px; min-width: 0; min-height: calc(100dvh - 48px); padding: var(--sana-space-6); background: var(--sana-shell); border-radius: var(--sana-radius-shell); }
+.app-shell .topbar { min-height: 64px; height: auto; padding: var(--sana-space-4) var(--sana-space-6); background: var(--sana-white); border: 1px solid var(--sana-line); border-radius: var(--sana-radius-card); box-shadow: var(--sana-shadow); backdrop-filter: none; }
+.app-shell .workspace-main { max-width: 1600px; margin-inline: auto; padding: var(--sana-space-6) 0 0; }
+.app-shell .workspace-footer { padding-inline: 0; }
+.app-shell .sidebar-brand { height: 64px; padding-inline: var(--sana-space-6); }
+.app-shell .workspace-label { margin-block-end: var(--sana-space-4); border-radius: var(--sana-radius-nav); }
+.app-shell.readable-workspace .nav-item { min-height: 44px; font-size: 14px; border-radius: var(--sana-radius-nav); color: var(--sana-line); }
+.app-shell .nav-item svg { color: inherit; }
+.app-shell .nav-item:hover { background: var(--sana-teal); color: var(--sana-white); }
+.app-shell .nav-item.active { background: var(--sana-canvas); color: var(--sana-teal); box-shadow: none; }
+.app-shell .nav-item.active .nav-count { background: var(--sana-white); color: var(--sana-teal); }
+.app-shell.readable-workspace .page-heading h1 { font-size: 24px; font-weight: 700; letter-spacing: 0; }
+.app-shell.readable-workspace .page-heading p { font-size: 14px; }
+.app-shell.readable-workspace .button { font-size: 14px; }
+.app-shell .stats-grid { gap: var(--sana-space-6); }
+.app-shell .stat-icon { background: var(--sana-canvas); color: var(--sana-teal); border-radius: var(--sana-radius-detail); }
+.app-shell .stat-card > strong { color: var(--sana-teal-mid); font-size: 24px; }
+.app-shell .team-summary-card { border-color: var(--sana-line); border-radius: var(--sana-radius-card); box-shadow: var(--sana-shadow); }
+.app-shell .team-summary-card dd:not(.team-summary-hint) { font-size: 24px; }
+.app-shell .filters { gap: var(--sana-space-4); }
+.filter-selects select { padding-inline: var(--sana-space-4) 28px; }
+.task-table th { background: var(--sana-white); color: var(--sana-ink); font-weight: 500; }
+.task-table :is(th, td) { border-color: var(--sana-line); }
+.task-table tbody tr:hover { background: var(--sana-canvas); }
+.dialog-overlay { background: var(--sana-overlay); backdrop-filter: var(--sana-overlay-blur); }
+.dialog { font-family: var(--ds-font-latin); }
+.dialog :is(input, select, textarea) { font-size: 16px; }
+.chart-tooltip { border-radius: var(--sana-radius-detail); box-shadow: var(--sana-shadow-popover); }
+.empty-icon { background: var(--sana-canvas); color: var(--sana-teal-mid); }
+.status-fill-done { background: var(--sana-chart-1); }
+.status-fill-in_progress { background: var(--sana-chart-2); }
+.status-fill-todo { background: var(--sana-chart-3); }
+/* Keep priority/overdue semantic colors; only categorical status charts use teal. */
+@media (min-width: 801px) and (max-width: 1100px) {
+  .app-shell { padding: var(--sana-space-4); }
+  .app-shell .sidebar { width: 224px; }
+  .app-shell .main-shell { margin-inline-start: 224px; padding: var(--sana-space-4); }
+}
+@media (max-width: 800px) {
+  .app-shell { padding: 0; background: var(--sana-shell); }
+  .app-shell .sidebar { width: min(290px, 86vw); background: var(--sana-page-bg); padding: var(--sana-space-5) var(--sana-space-4); }
+  .app-shell .main-shell { margin-inline-start: 0; padding: 0; border-radius: 0; min-height: 100dvh; }
+  .app-shell .topbar { border-radius: 0; padding: var(--sana-space-2) var(--sana-space-4); }
+  .app-shell .workspace-main { padding: var(--sana-space-6) var(--sana-space-4) var(--sana-space-8); }
+  .app-shell .workspace-footer { padding-inline: var(--sana-space-4); }
+  .app-shell .stats-grid { gap: var(--sana-space-4); }
+  .app-shell .stat-card { padding: var(--sana-space-4); }
+  .app-shell :is(input, select, textarea), .dialog :is(input, select, textarea) { font-size: 16px; }
+}
+@media print {
+  html, body, .app-shell, .app-shell .main-shell { background: white; padding: 0; margin: 0; }
+  .app-shell .sidebar, .app-shell .topbar { display: none; }
+}
+
+/* ---------- Sanaa brand row (same markup/CSS as HR's SanaBrand) ---------- */
+.sana-brand { display: inline-flex; align-items: baseline; gap: 8px; direction: ltr; white-space: nowrap; font-size: 24px; font-weight: 700; color: var(--sana-teal); letter-spacing: .02em; }
+.sana-brand strong { font-weight: 700; }
+.sana-brand i { font-style: normal; font-weight: 400; color: var(--sana-teal-mid); }
+.sana-brand-mark { height: 1.4em; width: auto; align-self: center; flex: none; }
+.sidebar-brand .sana-brand { color: var(--sana-white); font-size: 26px; min-width: 0; }
+.sidebar-brand .sana-brand i { color: var(--sana-disabled); font-size: .7em; }
+.app-shell .sidebar-brand { gap: 8px; padding-inline: var(--sana-space-2); margin-block-end: var(--sana-space-2); }
+.app-shell .sidebar-brand .mobile-close { margin-inline-start: auto; color: var(--sana-line); background: transparent; border-color: transparent; }
+.signin-brand .sana-brand { color: var(--sana-white); font-size: 34px; }
+.signin-brand .sana-brand i { color: var(--sana-mint-100, #a1ecdd); font-size: .5em; }
+.signin-brand .sana-brand-mark { height: 1.5em; }
+.app-shell .sidebar nav { gap: var(--sana-space-2); padding-inline: 0; scrollbar-width: none; }
+.app-shell .sidebar nav::-webkit-scrollbar { display: none; }
+.app-shell .nav-item { margin-bottom: 0; gap: var(--sana-space-3); padding-inline: var(--sana-space-3); }
+.app-shell .nav-item::before { display: none; }
+.app-shell .nav-label { color: var(--sana-disabled); letter-spacing: 0; text-transform: none; font-size: var(--type-label); padding-inline: var(--sana-space-3); }
+.app-shell .workspace-label { margin-inline: 0; background: transparent; border-color: color-mix(in srgb, var(--sana-teal-mid) 60%, transparent); }
+.app-shell .workspace-initial { background: var(--sana-teal); border-color: transparent; border-radius: var(--sana-radius-detail); color: var(--sana-white); }
+.app-shell .workspace-label strong { color: var(--sana-white); letter-spacing: 0; font-size: var(--type-secondary); }
+.app-shell .workspace-label span:not(.workspace-initial) { color: var(--sana-disabled); font-size: var(--type-label); }
+.app-shell .sidebar-bottom { padding-inline: 0; }
+.app-shell .sidebar-divider { background: var(--sana-teal-mid); }
+.app-shell .profile-button { color: var(--sana-white); border-radius: var(--sana-radius-nav); padding: var(--sana-space-2); }
+.app-shell .profile-button:hover { background: var(--sana-teal); }
+.app-shell .profile-button strong { font-size: var(--type-secondary); font-weight: 500; }
+.app-shell .profile-button small { color: var(--sana-disabled); font-size: var(--type-label); }
+.app-shell .profile-button > svg { color: var(--sana-disabled); }
+.app-shell .profile-button > .avatar { background: var(--sana-canvas); color: var(--sana-teal); }
+.app-shell .nav-count { background: var(--sana-teal-mid); color: var(--sana-white); border-radius: var(--sana-radius-pill); font-size: var(--type-label); padding: 2px 8px; }
+.app-shell .breadcrumbs { color: var(--sana-teal); font-size: var(--type-secondary); }
+.app-shell .breadcrumb-root, .app-shell .breadcrumbs > svg { color: var(--sana-muted); }
+.app-shell .topbar-date { color: var(--sana-muted); font-size: var(--type-secondary); }
+.app-shell .topbar .icon-button { border: 1px solid var(--sana-line); color: var(--sana-teal); background: transparent; }
+.app-shell .topbar .icon-button:hover { background: var(--sana-hover); color: var(--sana-white); border-color: var(--sana-hover); }
+.app-shell .notification-button i { background: var(--sana-danger); border-color: var(--sana-white); }
+.app-shell .development-banner { background: var(--sana-canvas); color: var(--sana-muted); border-radius: var(--sana-radius-pill); margin-block-start: var(--sana-space-3); border: 0; font-size: var(--type-label); }
+/* Containing block for visually-hidden (position:absolute) table headers, which otherwise escape the
+   scroller and widen the whole page in RTL. */
+.table-wrap { position: relative; }
+@media (max-width: 800px) {
+  input[type="date"] { padding-inline: var(--sana-space-3); }
+}
