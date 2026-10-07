@@ -9,14 +9,14 @@
 :root {
   /* ---- Type scale (HR typography.css / sana-theme.css) ---- */
   --font-enterprise: "Alexandria", "IBM Plex Sans Arabic", sans-serif;
-  --type-page: 24px;
-  --type-section: 20px;
-  --type-component: 16px;
+  --type-page: 22px;
+  --type-section: 18px;
+  --type-component: 15px;
   --type-body: 14px;
-  --type-secondary: 13px;
-  --type-label: 12px;
+  --type-secondary: 12px;
+  --type-label: 11px;
   --type-nav: 14px;
-  --type-kpi: 24px;
+  --type-kpi: 22px;
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
@@ -38,7 +38,7 @@
   --ds-gray-500: var(--sana-muted);
   --ds-gray-600: #646464;
   --ds-slate: var(--sana-muted);
-  --ds-ink: var(--sana-ink);
+  --ds-ink: var(--sana-text);
   --ds-black: #000000;
 
   /* Brand */
@@ -73,7 +73,7 @@
   --ds-danger-border: var(--sana-danger);
   --ds-danger-strong: var(--sana-danger);
   --ds-danger-soft: var(--sana-danger-bg);
-  /* Info / purple / navy had no place in the Sanaa palette: they now use teal and ink. */
+  /* HR's presentation layer renders info and category accents in teal. */
   --ds-info: var(--sana-teal-mid);
   --ds-info-soft: var(--sana-canvas);
   --ds-info-strong: var(--sana-teal);
@@ -89,9 +89,9 @@
   --ds-font-arabic: var(--font-enterprise);
   --ds-text-display: 40px;
   --ds-text-h1: 32px;
-  --ds-text-h2: 24px;
-  --ds-text-h3: 20px;
-  --ds-text-h4: 16px;
+  --ds-text-h2: var(--type-page);
+  --ds-text-h3: var(--type-section);
+  --ds-text-h4: var(--type-component);
   --ds-text-body: 14px;
   --ds-text-small: 13px;
   --ds-text-caption: 12px;
@@ -139,7 +139,7 @@
   --teal-soft: var(--ds-mint-50);
   --bg: var(--sana-canvas);
   --surface: var(--sana-white);
-  --ink: var(--sana-ink);
+  --ink: var(--sana-text);
   --muted: var(--sana-muted);
   --border: var(--sana-line);
   --radius: var(--sana-radius-card);

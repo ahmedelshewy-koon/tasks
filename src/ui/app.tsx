@@ -204,7 +204,9 @@ function WorkspaceApp({
   const [error, setError] = useState("");
   const detailOpen = newTask || !!projectForm || !!taskId;
   useEffect(() => {
-    if (detailOpen) window.scrollTo({ top: 0 });
+    if (!detailOpen) return;
+    window.scrollTo({ top: 0 });
+    document.querySelector(".main-shell")?.scrollTo({ top: 0 });
   }, [detailOpen, taskId]);
   useEffect(() => {
     const sync = () => {

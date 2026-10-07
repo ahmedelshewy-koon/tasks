@@ -536,6 +536,21 @@ button, input, select, textarea { font-family: inherit; }
   .app-shell .stat-card { padding: var(--sana-space-4); }
   .app-shell :is(input, select, textarea), .dialog :is(input, select, textarea) { font-size: 16px; }
 }
+/* Desktop: the page itself never scrolls; the white main shell scrolls its own content. */
+@media (min-width: 801px) {
+  html:has(.app-shell), body:has(.app-shell) { height: 100%; overflow: hidden; }
+  .app-shell { height: 100dvh; min-height: 0; overflow: hidden; }
+  .app-shell .main-shell { height: calc(100dvh - 2 * var(--sana-space-6)); min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+  .app-shell .main-shell::-webkit-scrollbar { display: none; }
+  .app-shell .main-shell { padding-top: 0; }
+  .app-shell .topbar { position: sticky; top: 0; z-index: 20; margin-top: var(--sana-space-6); box-shadow: 0 0 0 var(--sana-space-6) var(--sana-shell), var(--sana-shadow); }
+  .app-shell .sidebar nav { scrollbar-width: none; }
+  .app-shell .sidebar nav::-webkit-scrollbar { display: none; }
+}
+@media (min-width: 801px) and (max-width: 1100px) {
+  .app-shell .main-shell { height: calc(100dvh - 2 * var(--sana-space-4)); }
+  .app-shell .topbar { margin-top: var(--sana-space-4); box-shadow: 0 0 0 var(--sana-space-4) var(--sana-shell), var(--sana-shadow); }
+}
 @media print {
   html, body, .app-shell, .app-shell .main-shell { background: white; padding: 0; margin: 0; }
   .app-shell .sidebar, .app-shell .topbar { display: none; }

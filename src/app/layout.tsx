@@ -4,6 +4,8 @@ import "./design-tokens.css";
 import "./typography.css";
 import "./globals.css";
 import "./design-system.css";
+import "./dashboard-reference.css";
+import "./sana-system.css";
 export const metadata: Metadata = {
   title: "Sanaa Tasks",
   description: "A clear place for your projects, team, and everyday work.",

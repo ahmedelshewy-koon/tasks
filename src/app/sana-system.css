@@ -1,0 +1,134 @@
+/*
+ * SANA shared design-system finish layer (Tasks + HR use the same rules).
+ * Visual only: switch bar, modal, table and heading tones from the locked tokens.
+ * Loaded last. Spacing follows the 8pt grid.
+ */
+
+/* ---------- Switch bar / segmented control: white, #E7E7E7, 16px, #0B4237 selected ---------- */
+.tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 0;
+  padding: 8px;
+  background: var(--sana-white);
+  border: 1px solid #e7e7e7;
+  border-radius: 16px;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tabs button {
+  flex: none;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--sana-muted);
+  font-size: 12px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+.tabs button:hover { color: var(--sana-hover); }
+.tabs button.active,
+.tabs button.active:hover {
+  background: #0b4237;
+  color: var(--sana-white);
+  font-weight: 500;
+}
+.tabs button.active:after { display: none; }
+.tabs button > span {
+  padding: 0 8px;
+  background: #d9fbf3;
+  color: #0b4237;
+  font-size: 10px;
+  border-radius: 8px;
+}
+.tabs button.active > span { background: rgba(255, 255, 255, 0.16); color: var(--sana-white); }
+.drawer-tabs { margin: 0 0 24px; padding: 8px; border-bottom: 1px solid #e7e7e7; }
+
+/* ---------- Modals: centered, white, 24px padding ---------- */
+.dialog-overlay { background: rgba(0, 0, 0, 0.48); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.modal { border-radius: 24px; }
+.dialog-heading { padding: 24px; gap: 16px; border-bottom-color: var(--sana-line); }
+.dialog-heading h2 { font-size: 16px; font-weight: 700; color: #111b1b; }
+.dialog-heading p:not(.sr-only) { margin-top: 8px; }
+.modal :is(.modal-body, form) { padding-inline: 24px; }
+
+/* ---------- Headings and table headers ---------- */
+.panel-header h2, .section-heading h2, .dialog-heading h2, h3 { color: #111b1b; }
+.task-table th, .table th { font-weight: 500; font-size: 12px; padding: 8px 16px; color: #000; }
+.task-table td, .table td { padding: 8px 16px; }
+.task-table :is(th, td), .table :is(th, td) { border-color: var(--sana-line); }
+
+/* ---------- Charts that already exist: calm gridlines ---------- */
+.app-shell svg line.grid, .app-shell svg .grid-line { stroke: var(--sana-line); }
+
+/* ---------- Switch bar: beat the readable-workspace / detail-card overrides ---------- */
+html .app-shell .tabs { border: 1px solid #e7e7e7; margin: 0; }
+html .app-shell .tabs button { font-size: 14px; color: var(--sana-muted); }
+html .app-shell .tabs button:hover { color: var(--sana-hover); }
+html .app-shell .tabs button.active,
+html .app-shell .tabs button.active:hover { background: #0b4237; color: var(--sana-white); }
+html .app-shell .tabs button.active svg { color: inherit; }
+html .app-shell .view-toolbar .tabs { gap: 8px; }
+
+/* Match the HR finish layer while keeping Tasks' own component structure. */
+html .app-shell :is(.page-heading h1, .dashboard-title) {
+  color: var(--sana-heading);
+  font-size: var(--type-page);
+  font-weight: 700;
+}
+html .app-shell :is(.panel-header h2, .section-heading h2, .dashboard-my-tasks h2) {
+  color: var(--sana-heading);
+  font-size: var(--type-section);
+  font-weight: 700;
+}
+html .app-shell :is(.stat-card > strong, .team-summary-card dd:not(.team-summary-hint)) {
+  color: var(--sana-text);
+  font-size: var(--type-kpi);
+}
+html .app-shell .sidebar nav {
+  gap: var(--sana-sidebar-item-gap);
+  min-height: 0;
+  overflow-y: auto;
+}
+html .app-shell .nav-item,
+html .app-shell.readable-workspace .nav-item {
+  flex: 0 0 var(--sana-sidebar-item-height);
+  height: var(--sana-sidebar-item-height);
+  min-height: var(--sana-sidebar-item-height);
+  padding-inline: 16px;
+}
+html .app-shell :is(.stat-card, .project-card, .team-summary-card) {
+  padding: var(--sana-card-padding);
+}
+html .app-shell .stat-icon {
+  background: var(--sana-secondary-bg);
+  color: var(--sana-teal);
+}
+html .app-shell .button.secondary {
+  min-height: 40px;
+  padding-inline: 16px;
+  border-radius: var(--sana-radius-button);
+  background: var(--sana-secondary-bg);
+  border-color: var(--sana-secondary-border);
+  color: var(--sana-secondary-text);
+  font-size: var(--type-body);
+  font-weight: 500;
+}
+html .app-shell .button.secondary:hover {
+  background: var(--sana-hover);
+  border-color: var(--sana-hover);
+  color: var(--sana-white);
+}
+html .app-shell .badge {
+  padding: 4px 8px;
+  font-size: var(--type-label);
+}
+html .app-shell .task-table th,
+html .app-shell .table th {
+  font-size: var(--type-label);
+  color: var(--sana-text);
+}

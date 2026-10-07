@@ -1,0 +1,67 @@
+/*
+ * Locked Sanaa tokens layered over the existing Tasks components (visual only).
+ * Card: 24px / 16px padding / #F5F5F5 border / teal shadow.
+ * Sidebar: 44px items, 32px gaps, #0B4237 hover. Elsewhere hover: #188164.
+ * All spacing is a multiple of 8.
+ */
+:root {
+  --sana-hover: #188164;
+  --sana-nav-hover: #0b4237;
+  --sana-headline: #111b1b;
+}
+.app-shell { color: var(--sana-text); }
+.app-shell :is(h1, h2, h3), .app-shell .page-heading h1 { color: var(--sana-heading); }
+.app-shell .page-heading h1, .app-shell.readable-workspace .page-heading h1 { font-size: var(--type-page); font-weight: 700; }
+.app-shell .panel-header h2, .app-shell .section-heading h2 { font-size: var(--type-section); font-weight: 700; }
+
+/* ---------- Cards: one treatment everywhere ---------- */
+.panel, .stat-card, .project-card, .settings-panel, .team-summary-card {
+  background: var(--sana-white);
+  border: 1px solid var(--sana-line);
+  border-radius: 24px;
+  box-shadow: 0 0 8px 0 rgba(0, 204, 161, 0.16);
+}
+.stat-card, .project-card { padding: 16px; }
+.panel-header { padding: 16px; border-bottom-color: var(--sana-line); }
+.app-shell .stats-grid { gap: 16px; }
+.app-shell .page-heading { margin-bottom: 24px; }
+
+/* ---------- Hover: #188164 (non-sidebar) ---------- */
+.button.primary:hover, html[dir="rtl"] .button.primary:hover,
+.button.secondary:hover, .icon-button:hover,
+.app-shell .topbar .icon-button:hover { background: var(--sana-hover); color: var(--sana-white); }
+.app-shell .topbar .icon-button:hover { border-color: var(--sana-hover); }
+.text-button:hover, a:hover { color: var(--sana-hover); }
+.task-table tbody tr:hover { background: var(--sana-canvas); }
+
+/* ---------- Sidebar: 44px items, 24px between tabs, dark hover ---------- */
+.app-shell .sidebar nav { display: flex; flex-direction: column; gap: var(--sana-sidebar-item-gap); padding-block: 8px; }
+.app-shell.readable-workspace .nav-item,
+.app-shell .nav-item {
+  height: var(--sana-sidebar-item-height); min-height: var(--sana-sidebar-item-height); border-radius: var(--sana-radius-nav); margin-bottom: 0; flex-shrink: 0;
+  padding-block: 0; padding-inline: 16px; gap: 8px;
+  font-size: 14px; font-weight: 500; background: transparent; color: var(--sana-line);
+}
+.app-shell .nav-item svg { width: 20px; height: 20px; flex: none; color: inherit; }
+.app-shell .nav-item:hover, .app-shell .profile-button:hover { background: var(--sana-nav-hover); color: #fff; }
+.app-shell .nav-item:hover svg { color: #fff; }
+.app-shell .nav-item.active { background: var(--sana-canvas); color: var(--sana-teal); }
+.app-shell .nav-item.active:hover { background: var(--sana-canvas); color: var(--sana-teal); }
+.app-shell .nav-item.active:hover svg { color: var(--sana-teal); }
+.app-shell .sidebar-bottom { display: grid; gap: 24px; }
+
+/* ---------- Existing dashboard blocks ---------- */
+.getting-started {
+  gap: 16px; padding: 16px; margin-bottom: 24px;
+  background: var(--sana-white); border: 1px solid var(--sana-line);
+  border-radius: 24px; box-shadow: 0 0 8px 0 rgba(0, 204, 161, 0.16);
+}
+.getting-started-icon { width: 48px; height: 48px; border: 0; border-radius: 16px; background: #d9fbf3; color: var(--sana-teal); }
+.getting-started h2 { font-size: 16px; font-weight: 700; margin: 8px 0; }
+.getting-started p { font-size: 12px; color: var(--sana-muted); }
+.getting-started .button { font-size: 12px; background: var(--sana-button); border-color: transparent; }
+.eyebrow { font-size: 10px; letter-spacing: 0; }
+.app-shell .stat-icon { width: 32px; height: 32px; border-radius: 16px; background: #d9fbf3; color: var(--sana-teal); }
+.app-shell .stat-icon.rose { background: var(--sana-danger-bg); color: var(--sana-danger); }
+.app-shell .development-banner { margin-block: 32px 0; }
+.app-shell .dashboard-bottom, .app-shell .stats-grid { margin-bottom: 24px; }
