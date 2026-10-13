@@ -24,6 +24,7 @@ import { ErrorBox, type Translate } from "./primitives";
 import type { Language } from "./i18n";
 import { SanaaBrand } from "./sanaa-brand";
 import "./login.css";
+import "./landing.css";
 
 const columns = [
   { label: "Planning", tone: "plan", done: false },
@@ -55,11 +56,11 @@ export function Login({
       <section className="signin-panel">
         <div className="signin-blob blob-a" aria-hidden="true" />
         <div className="signin-blob blob-b" aria-hidden="true" />
-        <div
-          className="signin-lang"
-          role="group"
-          aria-label={t("Language")}
-        >
+        <a className="login-back" href="#">
+          <ArrowRight size={16} aria-hidden="true" />
+          {t("Back to home")}
+        </a>
+        <div className="signin-lang" role="group" aria-label={t("Language")}>
           <Globe2 size={17} aria-hidden="true" />
           {(["en", "ar"] as const).map((code) => (
             <button
@@ -155,7 +156,11 @@ export function Login({
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
-                    <Mail size={19} className="signin-icon" aria-hidden="true" />
+                    <Mail
+                      size={19}
+                      className="signin-icon"
+                      aria-hidden="true"
+                    />
                   </div>
                 </div>
                 <div className="signin-field">
@@ -220,11 +225,7 @@ export function Login({
               </p>
             )}
             {error && <ErrorBox error={t(error)} />}
-            <button
-              className="signin-submit"
-              disabled={busy}
-              aria-busy={busy}
-            >
+            <button className="signin-submit" disabled={busy} aria-busy={busy}>
               <span>
                 {t(
                   busy
@@ -290,7 +291,10 @@ export function Login({
               </div>
               <div className="art-board">
                 {columns.map((column) => (
-                  <div className={`art-col tone-${column.tone}`} key={column.label}>
+                  <div
+                    className={`art-col tone-${column.tone}`}
+                    key={column.label}
+                  >
                     <span className="art-col-label">
                       <i />
                       {t(column.label)}

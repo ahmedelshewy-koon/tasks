@@ -388,6 +388,7 @@ const ar: Record<string, string> = {
     "هويات تطوير · الموارد البشرية غير متصلة",
   "Simple by default.": "البساطة هي الأساس.",
   "Welcome to TASK": "مرحباً بك في TASK",
+  "Back to home": "العودة للرئيسية",
   "One place for work that matters.": "مكان واحد للعمل المهم.",
   "Projects, people, and progress — clearly connected.":
     "المشاريع والأشخاص والتقدم في مكان واحد.",

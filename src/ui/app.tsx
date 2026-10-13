@@ -59,6 +59,7 @@ import {
   type Translate,
 } from "./primitives";
 import { Login } from "./login";
+import { LandingPage, LOGIN_HASH } from "./landing-page";
 import { Confirm, ProjectForm, TaskForm } from "./forms";
 import {
   blankFilters,
@@ -157,11 +158,23 @@ export function TaskApp({
     document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
     if (languageReady) localStorage.setItem("task-language", lang);
   }, [lang, languageReady]);
+  const [preLogin, setPreLogin] = useState<"landing" | "login">("landing");
+  useEffect(() => {
+    const sync = () => {
+      setPreLogin(window.location.hash === LOGIN_HASH ? "login" : "landing");
+      if (window.location.hash === LOGIN_HASH) window.scrollTo(0, 0);
+    };
+    sync();
+    window.addEventListener("hashchange", sync);
+    return () => window.removeEventListener("hashchange", sync);
+  }, []);
   const t = (text: string) => translate(lang, text);
   return (
     <QueryClientProvider client={client}>
       {signedIn ? (
         <WorkspaceApp t={t} lang={lang} setLang={setLang} />
+      ) : preLogin === "landing" ? (
+        <LandingPage />
       ) : (
         <Login
           development={development}
@@ -1135,9 +1148,7 @@ function WorkspaceApp({
             )
           )}
           <footer className="workspace-footer">
-            <span>
-              Sanaa Tasks
-            </span>
+            <span>Sanaa Tasks</span>
             <span>{t("Simple by default.")}</span>
           </footer>
         </main>
