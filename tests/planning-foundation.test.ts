@@ -1,5 +1,6 @@
 import { beforeAll, afterAll, describe, expect, it } from "vitest";
 import { PGlite } from "@electric-sql/pglite";
+import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/pglite";
 import * as schema from "../src/db/schema";
 import { migrateDatabase } from "../src/db/migrate";
@@ -37,6 +38,7 @@ describe("additive enterprise planning foundation",()=>{
     await expect(svc("manager").saveActivity(projectId,{code:"A100",name:"Wrong",type:"milestone"})).rejects.toThrow("Milestone");
     const row=await svc("manager").saveActivity(projectId,{code:"A100",name:"Design",type:"task",calendarId:calendar.id,durationDays:4,plannedStart:"2026-10-18",plannedFinish:"2026-10-21"});
     expect(row.plannedStart).toBe("2026-10-18");
+    await expect(svc("manager").saveActivity(projectId,{code:"A100",name:"Duplicate"})).rejects.toThrow();
     await expect(svc("manager").saveActivity(otherId,{code:"B100",name:"No cross project",calendarId:calendar.id})).rejects.toThrow();
   });
   it("retains original task dates and archives block edits",async()=>{
@@ -44,10 +46,9 @@ describe("additive enterprise planning foundation",()=>{
     await svc("owner").saveActivity(projectId,{code:"LINK",name:"Linked plan",taskId:task.id,plannedStart:"2026-10-20",plannedFinish:"2026-10-25"});
     const [current]=await db.select().from(schema.tasks);
     expect(current.dueDate).toBe("2026-12-01");
-    await db.update(schema.projects).set({archivedAt:new Date()});
-    // Archiving the test project must not affect unrelated projects.
-    const {eq}=await import("drizzle-orm");
-    await db.update(schema.projects).set({archivedAt:null}).where(eq(schema.projects.id,otherId));
+    await db.update(schema.projects).set({archivedAt:new Date()}).where(eq(schema.projects.id,projectId));
+    const [other]=await db.select().from(schema.projects).where(eq(schema.projects.id,otherId));
+    expect(other.archivedAt).toBeNull();
     await expect(svc("owner").saveWbs(projectId,{code:"new",name:"Denied"})).rejects.toThrow("Archived");
   });
 });

@@ -1,6 +1,6 @@
 # Enterprise Project Planning: compatibility and delivery plan
 
-Status: Phase 0 audited; Phase 1 implemented incrementally on a feature branch. No migration, merge, or deployment to production has been performed by this change.
+Status: Phase 0 audited; Phase 1 schema, API, and planning UI implemented incrementally on a feature branch. No migration, merge, or deployment to production has been performed by this change.
 
 ## Existing system baseline (main at 8c0f5e76)
 - Next.js 16, React 19, TypeScript, PostgreSQL/PGlite, Drizzle ORM.
@@ -30,11 +30,11 @@ Status: Phase 0 audited; Phase 1 implemented incrementally on a feature branch. 
 - WBS hierarchy with project-unique codes and cycle checks.
 - Project working calendars with IANA time zone, workdays, hours/day and date exceptions.
 - Independent schedule activities with code, optional WBS/task/calendar links, duration, type, and **manually provided** planned dates.
-- Project-scoped authorized API and audit events. No change to existing UI, Gantt or task models in this slice.
+- Project-scoped authorized API and audit events. New WBS/activity/calendar tab in the existing project UI (same Sanaa tokens, AR/EN). Existing task Gantt and task models remain unchanged.
 - Scheduling calculations, SS/FF/SF relationships, progress control, baselines, resource and cost functionality are **not** implemented in this slice and are intentionally deferred.
 
 ## Next slices
-1. Phase 1 UI (WBS editor, activity register, calendar settings using the unchanged Sanaa tokens), with RTL/English tests.
+1. Phase 1 verification: install dependencies, run typecheck/test/build/RTL browser regression and PostgreSQL staging migration checks. The new planning UI must not be merged until these pass.
 2. Phase 2 scheduling (FS/SS/FF/SF, lag, constraints, working-calendar mathematics, forward/backward pass, float, longest path, schedule runs) with independent fixtures.
 3. Phase 3 immutable baselines, actuals and controlled updates.
 4. Phase 4 resource planning/leveling, phase 5 cost/EVM, phase 6 portfolio and enterprise controls.

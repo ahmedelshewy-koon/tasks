@@ -1,6 +1,7 @@
 import { advancedAr, advancedEn } from "./i18n-advanced";
 export type Language = "en" | "ar";
 const ar: Record<string, string> = {
+  "Planning": "التخطيط",
   "Circular dependencies are not allowed.": "لا يُسمح بالاعتماديات الدائرية.",
   "Dependencies must belong to the same project.":
     "يجب أن تكون الاعتماديات ضمن المشروع نفسه.",
