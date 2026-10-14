@@ -65,8 +65,8 @@ try{
  await page.goto(base+"/?page=site-dispatch");
  await page.getByRole("heading",{name:"Site Dispatch"}).waitFor();
  await page.getByText("Repair site switchgear",{exact:true}).waitFor();
- await page.getByText("Busy",{exact:true}).first().waitFor();
- await page.getByText("Available",{exact:true}).first().waitFor();
+ await page.locator(".site-state.busy").first().waitFor();
+ await page.locator(".site-state.free").first().waitFor();
  await page.screenshot({path:".data/verification/site-dispatch-en.png",fullPage:true});
  await page.goto(base+"/?page=portfolio");
  await page.getByRole("heading",{name:"Project Portfolio"}).waitFor();
