@@ -16,6 +16,7 @@ import {
   AtSign,
   Bell,
   Gauge,
+  Hammer,
   CalendarDays,
   Check,
   CheckCheck,
@@ -89,6 +90,7 @@ import { defaultView } from "./view-config";
 import { ProjectOverview, HealthBadge } from "./project-overview";
 import { ProjectActivity } from "./project-activity";
 import { WorkloadPage } from "./workload";
+import { SiteDispatch } from "./site-dispatch";
 import { ArchivePage } from "./archive";
 import { FieldsManager } from "./custom-fields";
 import { roleLabels } from "./activity-text";
@@ -110,6 +112,7 @@ type PageName =
   | "calendar"
   | "notifications"
   | "workload"
+  | "site-dispatch"
   | "archive"
   | "admin"
   | "profile";
@@ -121,6 +124,7 @@ const nav = [
   { id: "team", label: "Team Tasks", icon: Users },
   { id: "my-team", label: "My Team", icon: Users },
   { id: "workload", label: "Workload", icon: Gauge },
+  { id: "site-dispatch", label: "Site Dispatch", icon: Hammer },
   { id: "reports", label: "Reports", icon: LayoutDashboard },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "archive", label: "Archive", icon: Archive },
@@ -214,6 +218,7 @@ function WorkspaceApp({
   const isMobile = useMobileNavigation(mobile, closeNavigation);
   const [taskId, setTaskId] = useState<string>();
   const [newTask, setNewTask] = useState(false);
+  const [dispatchTarget,setDispatchTarget]=useState<{projectId:string;userId:string}|null>(null);
   const [projectForm, setProjectForm] = useState<Project | true | undefined>();
   const [archiveProject, setArchiveProject] = useState<Project>();
   const [fieldsFor, setFieldsFor] = useState<Project>();
@@ -255,6 +260,7 @@ function WorkspaceApp({
     return () => window.removeEventListener("popstate", sync);
   }, []);
   const go = (p: PageName, id?: string) => {
+    setDispatchTarget(null);
     setNewTask(false);
     setProjectForm(undefined);
     setTaskId(undefined);
@@ -345,7 +351,9 @@ function WorkspaceApp({
         <nav aria-label={t("Workspace")}>
           {nav
             .filter((n) =>
-              n.id === "reports" || n.id === "workload"
+              n.id === "site-dispatch"
+                ? !!data && data.projects.some(p=>p.canManage&&!p.archivedAt)
+                : n.id === "reports" || n.id === "workload"
                 ? !!data &&
                   (data.actor.isAdmin || reportIds(data.actor).length > 0)
                 : !["team", "my-team"].includes(n.id) ||
@@ -499,11 +507,14 @@ function WorkspaceApp({
                       <TaskForm
                         page
                         data={data}
-                        projectId={currentProject?.id}
+                        projectId={dispatchTarget?.projectId??currentProject?.id}
+                        initialAssigneeId={dispatchTarget?.userId}
+                        siteDispatch={!!dispatchTarget}
                         t={t}
-                        onClose={() => setNewTask(false)}
+                        onClose={() => {setNewTask(false);setDispatchTarget(null);}}
                         onSaved={async (id) => {
                           setNewTask(false);
+                          setDispatchTarget(null);
                           await refresh();
                           setTaskId(id);
                         }}
@@ -1090,6 +1101,9 @@ function WorkspaceApp({
                       </div>
                     </>
                   )}
+                  {page === "site-dispatch" && <SiteDispatch data={data} lang={lang}
+                    onAssign={(projectId,userId)=>{setDispatchTarget({projectId,userId});setNewTask(true);}}
+                    onOpenTask={setTaskId}/>}
                   {page === "workload" && (
                     <>
                       <PageHeading icon={Users} title={t("Team workload")} />
