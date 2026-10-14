@@ -14,6 +14,8 @@ const lanAddresses = Object.values(os.networkInterfaces())
 const config: NextConfig = {
   serverExternalPackages: ["@electric-sql/pglite", "pg"],
   poweredByHeader: false,
+  // Package production into a self-contained release so the VPS never builds in place.
+  output: "standalone",
   // When bound to 0.0.0.0, Next treats loopback hosts as cross-origin too.
   allowedDevOrigins: ["127.0.0.1", "localhost", ...lanAddresses],
 };
