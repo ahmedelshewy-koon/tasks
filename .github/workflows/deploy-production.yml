@@ -1,5 +1,11 @@
 name: Deploy Tasks to production
 on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - 'docs/**'
+      - '**/*.md'
   workflow_dispatch:
 permissions:
   contents: read
