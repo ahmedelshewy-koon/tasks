@@ -32,6 +32,7 @@ import {
   LayoutGrid,
   Map as MapIcon,
   GanttChart,
+  Layers3,
   List,
   LogOut,
   Menu,
@@ -94,6 +95,7 @@ import "./features.css";
 import { SanaaBrand } from "./sanaa-brand";
 import { ProjectRoadmap } from "./project-roadmap";
 import { ProjectGantt } from "./project-gantt";
+import { ProjectPlanning } from "./planning-view";
 import "./project-gantt.css";
 type PageName =
   | "reports"
@@ -126,6 +128,7 @@ const projectViews = [
   { id: "board", label: "Board", icon: LayoutGrid },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "gantt", label: "Gantt", icon: GanttChart },
+  { id: "planning", label: "Planning", icon: Layers3 },
   { id: "roadmap", label: "Project Map", icon: MapIcon },
   { id: "activity", label: "Activity", icon: Activity },
 ];
@@ -717,7 +720,7 @@ function WorkspaceApp({
                                 </button>
                               ))}
                             </div>
-                            {!["overview", "activity"].includes(view) && (
+                            {!["overview", "activity", "planning"].includes(view) && (
                               <span className="muted small-text">
                                 {filtered.length} {t("tasks")}
                               </span>
@@ -732,6 +735,8 @@ function WorkspaceApp({
                               onOpen={setTaskId}
                               onView={setView}
                             />
+                          ) : view === "planning" && currentProject ? (
+                            <ProjectPlanning key={currentProject.id} project={currentProject} tasks={pageTasks} lang={lang} />
                           ) : view === "activity" && currentProject ? (
                             <section className="panel feed-panel">
                               <ProjectActivity
