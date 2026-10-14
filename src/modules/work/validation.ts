@@ -44,6 +44,7 @@ const taskFields = {
   priority: z.enum(["low", "medium", "high", "urgent"]),
   status: z.enum(["todo", "in_progress", "done"]),
   dueDate: dateValue,
+  siteEstimateMinutes: z.number().int().min(15).max(43200).nullable(),
   assigneeIds: z.array(z.string().min(1)).min(1).max(100),
   recurrence: z.enum(["daily", "weekly", "monthly"]).nullable(),
 };
@@ -56,8 +57,10 @@ export const taskInput = z.object({
   priority: taskFields.priority.default("medium"),
   status: taskFields.status.default("todo"),
   dueDate: dateValue.optional(),
+  siteEstimateMinutes: taskFields.siteEstimateMinutes.optional(),
   recurrence: taskFields.recurrence.optional(),
   tags: z.lazy(() => tagNames).optional(),
+  siteDispatch: z.boolean().optional(),
 });
 // Patches carry no defaults: omitted fields stay unchanged.
 export const taskPatch = z.object(taskFields).partial();

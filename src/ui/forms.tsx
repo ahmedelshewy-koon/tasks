@@ -14,6 +14,8 @@ export function TaskForm({
   projectId,
   parent,
   page,
+  initialAssigneeId,
+  siteDispatch = false,
   t,
   onClose,
   onSaved,
@@ -22,6 +24,8 @@ export function TaskForm({
   projectId?: string;
   parent?: Task;
   page?: boolean;
+  initialAssigneeId?: string;
+  siteDispatch?: boolean;
   t: Translate;
   onClose: () => void;
   onSaved: (id: string) => void;
@@ -38,7 +42,9 @@ export function TaskForm({
       : canAssignTo(data.actor, e.userId, p || null),
   );
   const [assigned, setAssigned] = useState<string[]>(
-    allowed.some((e) => e.userId === personalOwner) ? [personalOwner] : [],
+    initialAssigneeId && allowed.some(e => e.userId === initialAssigneeId)
+      ? [initialAssigneeId]
+      : allowed.some((e) => e.userId === personalOwner) ? [personalOwner] : [],
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -56,6 +62,8 @@ export function TaskForm({
         priority: form.get("priority"),
         dueDate: form.get("dueDate") || null,
         recurrence: parent ? null : form.get("recurrence") || null,
+        siteEstimateMinutes: form.get("siteEstimateMinutes")?Number(form.get("siteEstimateMinutes")):null,
+        ...(siteDispatch ? {status:"in_progress",siteDispatch:true}:{}),
         tags: String(form.get("tags") || "")
           .split(/[,،]/)
           .map((tag) => tag.trim().replace(/^#/, ""))
@@ -140,6 +148,11 @@ export function TaskForm({
             </Field>
           )}
         </div>
+        <Field label={t("Site job estimate (minutes)")}>
+          <input type="number" name="siteEstimateMinutes" min={15} max={43200} step={15}
+            required={siteDispatch} placeholder={t("Leave empty for no estimate")} />
+        </Field>
+        {siteDispatch&&<p className="helper">{t("Site dispatch starts the job now and marks the assigned worker busy until completion.")}</p>}
         <Field label={t("Tags")}>
           <input
             name="tags"
@@ -167,13 +180,14 @@ export function TaskForm({
                   onChange={(event) =>
                     setAssigned((ids) =>
                       event.target.checked
-                        ? [...ids, e.userId]
+                        ? (siteDispatch ? [e.userId] : [...ids, e.userId])
                         : ids.filter((id) => id !== e.userId),
                     )
                   }
                 />
                 <Avatar small name={e.name} />
                 <span>{e.name}</span>
+                <small>{e.jobTitle}</small>
               </label>
             ))}
           </div>

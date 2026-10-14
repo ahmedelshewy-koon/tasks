@@ -16,6 +16,7 @@ import {
   AtSign,
   Bell,
   Gauge,
+  Hammer,
   CalendarDays,
   Check,
   CheckCheck,
@@ -32,6 +33,8 @@ import {
   LayoutGrid,
   Map as MapIcon,
   GanttChart,
+  BriefcaseBusiness,
+  Layers3,
   List,
   LogOut,
   Menu,
@@ -87,6 +90,7 @@ import { defaultView } from "./view-config";
 import { ProjectOverview, HealthBadge } from "./project-overview";
 import { ProjectActivity } from "./project-activity";
 import { WorkloadPage } from "./workload";
+import { SiteDispatch } from "./site-dispatch";
 import { ArchivePage } from "./archive";
 import { FieldsManager } from "./custom-fields";
 import { roleLabels } from "./activity-text";
@@ -94,9 +98,12 @@ import "./features.css";
 import { SanaaBrand } from "./sanaa-brand";
 import { ProjectRoadmap } from "./project-roadmap";
 import { ProjectGantt } from "./project-gantt";
+import { ProjectPlanning } from "./planning-view";
+import { PortfolioView } from "./portfolio";
 import "./project-gantt.css";
 type PageName =
   | "reports"
+  | "portfolio"
   | "dashboard"
   | "my-tasks"
   | "projects"
@@ -105,6 +112,7 @@ type PageName =
   | "calendar"
   | "notifications"
   | "workload"
+  | "site-dispatch"
   | "archive"
   | "admin"
   | "profile";
@@ -112,9 +120,11 @@ const nav = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "my-tasks", label: "My Tasks", icon: CheckSquare2 },
   { id: "projects", label: "Projects", icon: FolderOpen },
+  { id: "portfolio", label: "Portfolio", icon: BriefcaseBusiness },
   { id: "team", label: "Team Tasks", icon: Users },
   { id: "my-team", label: "My Team", icon: Users },
   { id: "workload", label: "Workload", icon: Gauge },
+  { id: "site-dispatch", label: "Site Dispatch", icon: Hammer },
   { id: "reports", label: "Reports", icon: LayoutDashboard },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "archive", label: "Archive", icon: Archive },
@@ -126,6 +136,7 @@ const projectViews = [
   { id: "board", label: "Board", icon: LayoutGrid },
   { id: "calendar", label: "Calendar", icon: CalendarDays },
   { id: "gantt", label: "Gantt", icon: GanttChart },
+  { id: "planning", label: "Planning", icon: Layers3 },
   { id: "roadmap", label: "Project Map", icon: MapIcon },
   { id: "activity", label: "Activity", icon: Activity },
 ];
@@ -207,6 +218,7 @@ function WorkspaceApp({
   const isMobile = useMobileNavigation(mobile, closeNavigation);
   const [taskId, setTaskId] = useState<string>();
   const [newTask, setNewTask] = useState(false);
+  const [dispatchTarget,setDispatchTarget]=useState<{projectId:string;userId:string}|null>(null);
   const [projectForm, setProjectForm] = useState<Project | true | undefined>();
   const [archiveProject, setArchiveProject] = useState<Project>();
   const [fieldsFor, setFieldsFor] = useState<Project>();
@@ -248,6 +260,7 @@ function WorkspaceApp({
     return () => window.removeEventListener("popstate", sync);
   }, []);
   const go = (p: PageName, id?: string) => {
+    setDispatchTarget(null);
     setNewTask(false);
     setProjectForm(undefined);
     setTaskId(undefined);
@@ -338,7 +351,9 @@ function WorkspaceApp({
         <nav aria-label={t("Workspace")}>
           {nav
             .filter((n) =>
-              n.id === "reports" || n.id === "workload"
+              n.id === "site-dispatch"
+                ? !!data && data.projects.some(p=>p.canManage&&!p.archivedAt)
+                : n.id === "reports" || n.id === "workload"
                 ? !!data &&
                   (data.actor.isAdmin || reportIds(data.actor).length > 0)
                 : !["team", "my-team"].includes(n.id) ||
@@ -492,11 +507,14 @@ function WorkspaceApp({
                       <TaskForm
                         page
                         data={data}
-                        projectId={currentProject?.id}
+                        projectId={dispatchTarget?.projectId??currentProject?.id}
+                        initialAssigneeId={dispatchTarget?.userId}
+                        siteDispatch={!!dispatchTarget}
                         t={t}
-                        onClose={() => setNewTask(false)}
+                        onClose={() => {setNewTask(false);setDispatchTarget(null);}}
                         onSaved={async (id) => {
                           setNewTask(false);
+                          setDispatchTarget(null);
                           await refresh();
                           setTaskId(id);
                         }}
@@ -717,7 +735,7 @@ function WorkspaceApp({
                                 </button>
                               ))}
                             </div>
-                            {!["overview", "activity"].includes(view) && (
+                            {!["overview", "activity", "planning"].includes(view) && (
                               <span className="muted small-text">
                                 {filtered.length} {t("tasks")}
                               </span>
@@ -732,6 +750,8 @@ function WorkspaceApp({
                               onOpen={setTaskId}
                               onView={setView}
                             />
+                          ) : view === "planning" && currentProject ? (
+                            <ProjectPlanning key={currentProject.id} project={currentProject} tasks={pageTasks} employees={data.employees} lang={lang} />
                           ) : view === "activity" && currentProject ? (
                             <section className="panel feed-panel">
                               <ProjectActivity
@@ -881,6 +901,7 @@ function WorkspaceApp({
                       )}
                     </>
                   )}
+                  {page === "portfolio" && <PortfolioView data={data} lang={lang} onProject={id=>go("projects",id)}/>}
                   {page === "reports" && (
                     <Reports data={data} t={t} lang={lang} onOpen={setTaskId} />
                   )}
@@ -1080,6 +1101,9 @@ function WorkspaceApp({
                       </div>
                     </>
                   )}
+                  {page === "site-dispatch" && <SiteDispatch data={data} lang={lang}
+                    onAssign={(projectId,userId)=>{setDispatchTarget({projectId,userId});setNewTask(true);}}
+                    onOpenTask={setTaskId}/>}
                   {page === "workload" && (
                     <>
                       <PageHeading icon={Users} title={t("Team workload")} />

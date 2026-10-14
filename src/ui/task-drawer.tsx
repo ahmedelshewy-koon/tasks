@@ -178,6 +178,12 @@ export function TaskDrawer({
                     )}
                   </div>
                 </div>
+                {task.siteStartedAt&&<p className="helper">
+                  {t("Site job started")}: {timestamp(new Date(task.siteStartedAt))}
+                  {task.siteExpectedEndAt&&<> · {t("Estimated site finish")}: {timestamp(new Date(task.siteExpectedEndAt))}</>}
+                  {task.status==="in_progress"&&task.siteExpectedEndAt&&new Date(task.siteExpectedEndAt).getTime()<Date.now()&&
+                    <> · {t("Past estimated finish — still busy until completed")}</>}
+                </p>}
                 <div className="detail-tabs-card">
                   <div className="tabs drawer-tabs">
                     <button
@@ -210,6 +216,7 @@ export function TaskDrawer({
                             priority: form.get("priority"),
                             status: form.get("status"),
                             dueDate: form.get("dueDate") || null,
+                            siteEstimateMinutes:form.get("siteEstimateMinutes")?Number(form.get("siteEstimateMinutes")):null,
                             sectionId: form.get("section") || null,
                             ...(!task.parentId
                               ? { recurrence: form.get("recurrence") || null }
@@ -275,6 +282,10 @@ export function TaskDrawer({
                                 name="dueDate"
                                 defaultValue={task.dueDate || ""}
                               />
+                            </Field>
+                            <Field label={t("Site job estimate (minutes)")}>
+                              <input type="number" min={15} max={43200} step={15} name="siteEstimateMinutes"
+                                defaultValue={task.siteEstimateMinutes??""}/>
                             </Field>
                             {!task.parentId && (
                               <Field label={t("Repeats")}>

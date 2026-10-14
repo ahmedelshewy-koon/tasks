@@ -96,5 +96,6 @@ export async function context() {
     actor,
     service: createService(db, actor, directory),
     development: isDevelopment(),
+    directory,
   };
 }
