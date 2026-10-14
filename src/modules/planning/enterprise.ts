@@ -55,7 +55,7 @@ export function createEnterprisePlanning(db:Database,actor:Actor,directory:Emplo
    const project=await access(db,projectId);
    const [member]=await db.select().from(s.members).where(and(eq(s.members.projectId,projectId),eq(s.members.userId,actor.userId)));
    const financeAllowed=actor.isAdmin||project.ownerId===actor.userId||member?.role==="project_manager";
-   const [resources,assignments,costs,risks,progress,baselines,activities]=await Promise.all([
+   const [resources,assignments,costs,risks,progress,baselines,activities,baselineReviews]=await Promise.all([
     db.select().from(s.planningResources).where(eq(s.planningResources.projectId,projectId)),
     db.select().from(s.planningResourceAssignments).where(eq(s.planningResourceAssignments.projectId,projectId)),
     db.select().from(s.planningCostItems).where(eq(s.planningCostItems.projectId,projectId)),
@@ -63,8 +63,9 @@ export function createEnterprisePlanning(db:Database,actor:Actor,directory:Emplo
     db.select().from(s.planningProgress).where(eq(s.planningProgress.projectId,projectId)),
     db.select().from(s.planningBaselines).where(eq(s.planningBaselines.projectId,projectId)),
     db.select().from(s.planningActivities).where(eq(s.planningActivities.projectId,projectId)),
+    db.select({baselineId:s.planningBaselineReviews.baselineId,status:s.planningBaselineReviews.status}).from(s.planningBaselineReviews).where(eq(s.planningBaselineReviews.projectId,projectId)),
    ]);
-   return {resources:financeAllowed?resources:resources.map(r=>({...r,rateMinor:0})),assignments,costs:financeAllowed?costs:[],risks,progress,baselines,activities,financeAllowed};
+   return {resources:financeAllowed?resources:resources.map(r=>({...r,rateMinor:0})),assignments,costs:financeAllowed?costs:[],risks,progress,baselines,activities,financeAllowed,approvedBaselineIds:baselineReviews.filter(r=>r.status==="approved").map(r=>r.baselineId)};
   },
   async saveResource(projectId:string,payload:unknown){
    const v=resourceInput.parse(payload);

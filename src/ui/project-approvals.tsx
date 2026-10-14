@@ -22,8 +22,7 @@ export function ProjectApprovals({projectId,lang,writable}:{projectId:string;lan
  const query=useQuery({queryKey:key,queryFn:()=>request<ApprovalData>(`/api/planning/approvals?projectId=${encodeURIComponent(projectId)}`),retry:false});
  const controls=useQuery({queryKey:controlsKey,queryFn:()=>request<{baselines:Baseline[]}>(`/api/planning/controls?projectId=${encodeURIComponent(projectId)}`),retry:false});
  const [kind,setKind]=useState<Change["kind"]>("schedule"),[title,setTitle]=useState(""),[description,setDescription]=useState(""),[days,setDays]=useState(0),[impact,setImpact]=useState(0),[currency,setCurrency]=useState("SAR");
- const [note,setNote]=useState(""),[baselineId,setBaselineId]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
- const baselineById=new Map((controls.data?.baselines??[]).map(b=>[b.id,b]));
+ const [note,setNote]=useState(""),[busy,setBusy]=useState(false),[error,setError]=useState(""),[success,setSuccess]=useState("");
  async function post(body:object){
   setBusy(true);setError("");setSuccess("");
   try{
@@ -53,10 +52,10 @@ export function ProjectApprovals({projectId,lang,writable}:{projectId:string;lan
       const review=d.baselines.find(x=>x.baselineId===b.id);
       return <div key={b.id} className="ep-approval-item"><div className="ep-approval-head"><strong>{b.label}</strong><span>{review?t[review.status]:t.none}</span></div>
       {!review&&writable&&<button type="button" className="button secondary" disabled={busy} onClick={()=>void post({action:"requestBaseline",baselineId:b.id})}>{t.requestBaseline}</button>}
-      {review?.status==="pending"&&d.canReview&&writable&&review.requestedBy!==d.currentUserId&&b.createdBy!==d.currentUserId&&<div className="ep-actions">
+      {review?.status==="pending"&&d.canReview&&writable&&review.requestedBy!==d.currentUserId&&b.createdBy!==d.currentUserId&&<div className="ep-form"><label>{t.reason}<input maxLength={2000} value={note} onChange={e=>setNote(e.target.value)}/></label><div className="ep-actions">
        <button type="button" className="button primary" disabled={busy} onClick={()=>void post({action:"reviewBaseline",reviewId:review.id,data:{status:"approved",note}})}>{t.approve}</button>
        <button type="button" className="button secondary" disabled={busy||note.trim().length<3} onClick={()=>void post({action:"reviewBaseline",reviewId:review.id,data:{status:"rejected",note}})}>{t.reject}</button>
-      </div>}</div>;
+      </div></div>}</div>;
     })}
     </>}
   </div>

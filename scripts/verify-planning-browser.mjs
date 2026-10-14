@@ -44,6 +44,12 @@ try{
  await page.getByText("Calculated Gantt — preview only").waitFor();
  await page.getByRole("tab",{name:"Baselines & Progress"}).click();
  await page.getByRole("heading",{name:"Approved baselines"}).waitFor();
+ await page.getByRole("tab",{name:"Approvals & Changes"}).click();
+ await page.getByRole("heading",{name:"Change requests"}).waitFor();
+ await page.getByRole("textbox",{name:"Request title"}).fill("QA change proposal");
+ await page.getByRole("textbox",{name:"Proposed change"}).fill("Test-controlled schedule change request from browser smoke.");
+ await page.getByRole("button",{name:"Submit change request"}).click();
+ await page.getByText("QA change proposal",{exact:true}).waitFor();
  await page.getByRole("tab",{name:"Resources"}).click();
  await page.getByRole("heading",{name:"Resources",exact:false}).first().waitFor();
  await page.getByRole("tab",{name:"Costs"}).click();

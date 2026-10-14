@@ -14,7 +14,7 @@ type Risk={id:string;title:string;probability:number;impact:number;status:"open"
 type Activity={id:string;code:string;name:string;plannedStart:string|null;plannedFinish:string|null};
 type Progress={activityId:string;percentComplete:number};
 type Baseline={snapshot:{activities:Activity[]};label:string;id:string};
-type Data={resources:Resource[];assignments:Assignment[];costs:Cost[];risks:Risk[];progress:Progress[];baselines:Baseline[];activities:Activity[];financeAllowed:boolean};
+type Data={resources:Resource[];assignments:Assignment[];costs:Cost[];risks:Risk[];progress:Progress[];baselines:Baseline[];activities:Activity[];financeAllowed:boolean;approvedBaselineIds:string[]};
 const words={
  ar:{resources:"الموارد",costs:"الميزانية والتكاليف",risks:"المخاطر",assignments:"توزيع الموارد",save:"حفظ",name:"الاسم",kind:"النوع",labor:"موظف",equipment:"معدة",material:"مادة",hr:"معرف الموظف في HR (اختياري)",capacity:"الساعات المتاحة أسبوعيًا",rate:"سعر الساعة بأصغر وحدة نقدية",currency:"العملة",resource:"المورد",activity:"النشاط",hours:"الساعات المخططة",percent:"نسبة التخصيص",budget:"الميزانية",actual:"التكلفة الفعلية",risk:"الخطر",impact:"التأثير",probability:"الاحتمالية",response:"خطة الاستجابة",status:"الحالة",open:"مفتوح",mitigating:"تحت المعالجة",closed:"مغلق",none:"بدون",edit:"تعديل",evm:"مؤشرات القيمة المكتسبة",nodata:"لا توجد بيانات.",manual:"القيم المالية تُسجّل يدويًا، ولا يتم سحبها من ERP تلقائيًا.",limitation:"PV وSPI يتطلبان خط أساس محددًا بتواريخ صحيحة. لا يتم جمع العملات المختلفة.",plannedDate:"تاريخ التقييم",selectedBaseline:"خط الأساس",missing:"غير متاح",readonly:"عرض فقط — التعديل لمدير المشروع."},
  en:{resources:"Resources",costs:"Budget & costs",risks:"Risks",assignments:"Resource assignments",save:"Save",name:"Name",kind:"Kind",labor:"Labor",equipment:"Equipment",material:"Material",hr:"HR employee reference (optional)",capacity:"Available hours/week",rate:"Hourly rate in minor currency units",currency:"Currency",resource:"Resource",activity:"Activity",hours:"Planned hours",percent:"Allocation percent",budget:"Budget",actual:"Actual cost",risk:"Risk",impact:"Impact",probability:"Probability",response:"Mitigation",status:"Status",open:"Open",mitigating:"Mitigating",closed:"Closed",none:"None",edit:"Edit",evm:"Earned value metrics",nodata:"No records yet.",manual:"Costs are manually entered; there is no automatic ERP sync.",limitation:"PV and SPI require a dated baseline. Different currencies are never added together.",plannedDate:"Data date",selectedBaseline:"Baseline",missing:"N/A",readonly:"Read only — editing is for managers."},
@@ -37,7 +37,8 @@ export function ProjectEnterprise({projectId,lang,writable,tab,employees}:{proje
     if(action==="saveRisk")setRisk({id:"",title:"",probability:3,impact:3,status:"open",response:""});
   }catch(e){setError(e instanceof Error?e.message:"Request failed");}finally{setBusy(false);}
  }
- const d=query.data, baseline=d?.baselines.find(b=>b.id===baselineId)??d?.baselines[0];
+ const d=query.data,approvedBaselines=d?.baselines.filter(b=>d.approvedBaselineIds.includes(b.id))??[];
+ const baseline=approvedBaselines.find(b=>b.id===baselineId)??approvedBaselines[0];
  const currencies=[...new Set(d?.costs.map(c=>c.currency)??[])];
  const picked=currencies.includes(currency)?currency:currencies[0]??currency;
  const load=d?weeklyResourceLoad({resources:d.resources,assignments:d.assignments,activities:d.activities}):null;
@@ -64,7 +65,7 @@ export function ProjectEnterprise({projectId,lang,writable,tab,employees}:{proje
     <div className="ep-two">
       <label className="ep-control-label">{t.currency}<select value={picked} onChange={e=>setCurrency(e.target.value)}>{(currencies.length?currencies:["SAR"]).map(v=><option key={v}>{v}</option>)}</select></label>
       <label className="ep-control-label">{t.plannedDate}<input type="date" value={date} onChange={e=>setDate(e.target.value)}/></label>
-      <label className="ep-control-label">{t.selectedBaseline}<select value={baseline?.id??""} onChange={e=>setBaselineId(e.target.value)}><option value="">{t.none}</option>{d.baselines.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select></label>
+      <label className="ep-control-label">{t.selectedBaseline}<select value={baseline?.id??""} onChange={e=>setBaselineId(e.target.value)}><option value="">{t.none}</option>{approvedBaselines.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select></label>
     </div>
     <div className="ep-metric-grid">{earned&&(["BAC","AC","EV","PV","CPI","SPI","CV","SV"] as const).map(key=><div className="ep-metric" key={key}><strong>{key}</strong><span>{earned[key]===null?t.missing:["CPI","SPI"].includes(key)?Number(earned[key]).toFixed(2):money(Number(earned[key]),picked,lang)}</span></div>)}</div>
     <p className="ep-muted">{t.limitation}</p></>}
