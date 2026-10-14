@@ -368,3 +368,25 @@ export const planningRelationships = pgTable(
     index("planning_relationships_project_idx").on(t.projectId),
   ],
 );
+
+/** Immutable snapshots: changing the live plan never rewrites an approved baseline. */
+export const planningBaselines = pgTable("planning_baselines", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  projectId: uuid("project_id").notNull().references(() => projects.id),
+  label: text("label").notNull(),
+  snapshot: jsonb("snapshot").notNull(),
+  createdBy: text("created_by").notNull().references(() => users.id),
+  createdAt: created(),
+}, t=>[index("planning_baselines_project_idx").on(t.projectId)]);
+/** Actual progress deliberately separate from task status and task completion rules. */
+export const planningProgress = pgTable("planning_progress", {
+  activityId: uuid("activity_id").primaryKey().references(() => planningActivities.id),
+  projectId: uuid("project_id").notNull().references(() => projects.id),
+  percentComplete: integer("percent_complete").notNull().default(0),
+  actualStart: date("actual_start"),
+  actualFinish: date("actual_finish"),
+  remainingDays: integer("remaining_days").notNull().default(0),
+  note: text("note").notNull().default(""),
+  updatedBy: text("updated_by").notNull().references(() => users.id),
+  updatedAt: timestamp("updated_at",{withTimezone:true}).notNull().defaultNow(),
+},t=>[index("planning_progress_project_idx").on(t.projectId)]);
