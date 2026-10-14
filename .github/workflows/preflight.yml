@@ -1,0 +1,31 @@
+name: Production SSH preflight (read-only)
+on:
+  push:
+    branches: [ci/safe-automated-deploy]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    if: github.actor == 'fadyy2k' && github.ref == 'refs/heads/ci/safe-automated-deploy'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Configure pinned SSH transport
+        env:
+          DEPLOY_KEY: ${{ secrets.SANA_DEPLOY_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SANA_DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_KEY" && test -n "$KNOWN_HOSTS"
+          install -d -m 0700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/id_ed25519" >/dev/null
+      - name: Check production connectivity without changing anything
+        run: |
+          set -euo pipefail
+          ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -o ServerAliveInterval=10 \
+            sana-deploy@209.42.23.12 \
+            'set -eu; test "$(id -un)" = "sana-deploy"; test -d /home/sana-deploy/incoming; test -x /usr/local/sbin/sana-deploy-release; test -x /usr/local/sbin/sana-core-deploy; test -x /usr/local/sbin/sana-hr-deploy; systemctl is-active --quiet sana-platform.service; systemctl is-active --quiet sanaa-tasks.service; systemctl is-active --quiet sanaa-hr.service; echo "VPS SSH and service checks: OK"'
