@@ -5,7 +5,7 @@
  * No side effects, task mutations, database writes or resource leveling.
  */
 export type RelationshipType = "FS" | "SS" | "FF" | "SF";
-export type ScheduleActivity = { id: string; durationDays: number };
+export type ScheduleActivity = { id: string; durationDays: number; notBeforeDate?: string | null };
 export type ScheduleLink = { predecessorId: string; successorId: string; type: RelationshipType; lagDays: number };
 export type ScheduleCalendar = {
   workingDays: number[];
@@ -71,6 +71,20 @@ function offset(link: ScheduleLink, before: number, after: number) {
   }
 }
 
+function minimumWorkSlot(start: string, minDate: string, calendar: ScheduleCalendar) {
+  const isWorking=prepareCalendar(calendar);
+  const startDay=toDay(start),target=toDay(minDate);
+  if(target<=startDay)return 0;
+  let slot=0;
+  for(let d=startDay;d<startDay+365000;d++){
+    if(isWorking(d)){
+      if(d>=target)return slot;
+      slot++;
+    }
+  }
+  throw new Error("Start constraint exceeds the supported horizon.");
+}
+
 /** Forward/backward longest-path calculation over start-to-start constraints. */
 export function calculateCpm(input: {
   activities: ScheduleActivity[];
@@ -114,7 +128,9 @@ export function calculateCpm(input: {
   if(order.length!==activities.length)throw new Error("Circular schedule relationships are not allowed.");
   const early=new Map<string,number>();
   for(const id of order) {
-    const es=Math.max(0,...incoming.get(id)!.map(e=>early.get(e.source)!+e.offset));
+    const notBefore=map.get(id)!.notBeforeDate;
+    const constraint=notBefore?minimumWorkSlot(input.startDate,notBefore,input.calendar):0;
+    const es=Math.max(0,constraint,...incoming.get(id)!.map(e=>early.get(e.source)!+e.offset));
     early.set(id,es);
   }
   const horizon=Math.max(0,...activities.map(a=>early.get(a.id)!+a.durationDays));

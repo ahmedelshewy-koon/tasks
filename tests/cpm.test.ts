@@ -35,6 +35,11 @@ describe("project CPM scheduling preview",()=>{
     expect(m.earlyStartDate).toBe(m.earlyFinishDate);
     expect(run({}).projectFinishDate).toBeNull();
   });
+  it("honors Start No Earlier Than on the shared working calendar",()=>{
+    const result=calculateCpm({activities:[{id:"A",durationDays:2,notBeforeDate:"2026-10-25"}],relationships:[],startDate:"2026-10-18",calendar});
+    expect(result.activities[0].earlyStartDate).toBe("2026-10-25");
+    expect(result.projectFinishDate).toBe("2026-10-26");
+  });
   it("rejects cycles, invalid calendar, bad targets, malformed lags and duplicates",()=>{
     expect(()=>run({A:1,B:2},[{predecessorId:"A",successorId:"B",type:"FS",lagDays:0},{predecessorId:"B",successorId:"A",type:"FS",lagDays:0}])).toThrow("Circular");
     expect(()=>run({A:1},[],"2026-10-18",{workingDays:[]})).toThrow();

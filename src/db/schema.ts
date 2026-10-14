@@ -341,6 +341,8 @@ export const planningActivities = pgTable(
     durationDays: integer("duration_days").notNull().default(1),
     plannedStart: date("planned_start"),
     plannedFinish: date("planned_finish"),
+    constraintType: text("constraint_type",{enum:["snet"]}),
+    constraintDate: date("constraint_date"),
     createdAt: created(),
   },
   (t) => [

@@ -24,10 +24,12 @@ const activityInput = z.object({
   wbsId: id.nullable().default(null), taskId: id.nullable().default(null),
   calendarId: id.nullable().default(null), durationDays: z.number().int().min(0).max(36500).default(1),
   plannedStart: day.nullable().default(null), plannedFinish: day.nullable().default(null),
+  constraintType: z.enum(["snet"]).nullable().default(null), constraintDate: day.nullable().default(null),
 }).strict().superRefine((v, ctx) => {
   if (v.type === "milestone" && v.durationDays !== 0) ctx.addIssue({ code:"custom", path:["durationDays"], message:"Milestone duration must be zero." });
   if (v.type === "task" && v.durationDays === 0) ctx.addIssue({ code:"custom", path:["durationDays"], message:"Task duration must be positive." });
   if (v.plannedStart && v.plannedFinish && v.plannedStart > v.plannedFinish) ctx.addIssue({ code:"custom", path:["plannedFinish"], message:"Finish cannot precede start." });
+  if (!!v.constraintType !== !!v.constraintDate) ctx.addIssue({code:"custom",path:["constraintDate"],message:"Constraint date and type are required together."});
 });
 
 const relationshipInput = z.object({
@@ -140,7 +142,7 @@ export function createPlanningService(db: Database, actor: Actor) {
           const [task]=await tx.select().from(s.tasks).where(eq(s.tasks.id,v.taskId));
           if(!task || task.projectId!==projectId || task.deletedAt || task.archivedAt) throw new AppError(400,"Task must be active and in this project.");
         }
-        const data={projectId,code:v.code,name:v.name,type:v.type,wbsId:v.wbsId,taskId:v.taskId,calendarId:v.calendarId,durationDays:v.durationDays,plannedStart:v.plannedStart,plannedFinish:v.plannedFinish};
+        const data={projectId,code:v.code,name:v.name,type:v.type,wbsId:v.wbsId,taskId:v.taskId,calendarId:v.calendarId,durationDays:v.durationDays,plannedStart:v.plannedStart,plannedFinish:v.plannedFinish,constraintType:v.constraintType,constraintDate:v.constraintDate};
         const [row]=existing
           ? await tx.update(s.planningActivities).set(data).where(eq(s.planningActivities.id,existing.id)).returning()
           : await tx.insert(s.planningActivities).values(data).returning();
@@ -212,7 +214,7 @@ export function createPlanningService(db: Database, actor: Actor) {
       return {
         projectId,calendarId,
         ...calculateCpm({
-          activities:activities.map(a=>({id:a.id,durationDays:a.durationDays})),
+          activities:activities.map(a=>({id:a.id,durationDays:a.durationDays,notBeforeDate:a.constraintType==="snet"?a.constraintDate:null})),
           relationships:links.map(l=>({predecessorId:l.predecessorId,successorId:l.successorId,type:l.type,lagDays:l.lagDays})),
           startDate:project.startDate,
           calendar:{workingDays:calendar.workingDays,exceptions:exceptions.map(x=>({day:x.day,isWorking:x.isWorking}))},
