@@ -4,6 +4,7 @@ import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {request} from "./api";
 import type {Language} from "./i18n";
 import "./planning-view.css";
+import {checkScheduleQuality,type QualityInput} from "../modules/planning/quality";
 type Activity={id:string;code:string;name:string;plannedStart:string|null;plannedFinish:string|null;durationDays:number};
 type Baseline={id:string;label:string;createdAt:string;snapshot:{schemaVersion:number;activities:Activity[]}};
 type Progress={activityId:string;percentComplete:number;actualStart:string|null;actualFinish:string|null;remainingDays:number;note:string};
@@ -14,12 +15,14 @@ const words={
   ar:{title:"خط الأساس والتقدم", baseline:"خطوط الأساس المعتمدة",capture:"حفظ خط أساس",label:"اسم خط الأساس",history:"مقارنة الخطة بالتنفيذ",name:"النشاط",planned:"النهاية الأصلية",current:"النهاية الحالية",start:"البداية الفعلية",finish:"النهاية الفعلية",percent:"الإنجاز %",remaining:"الأيام المتبقية",note:"ملاحظة",save:"حفظ التقدم",select:"اختر",empty:"لم يتم تسجيل خط أساس بعد.",readonly:"الاطلاع متاح؛ التعديل لمدير المشروع فقط.",help:"الخطوط المعتمدة ثابتة، وتسجيل التقدم لا يغيّر حالة مهام Tasks."},
   en:{title:"Baselines & progress",baseline:"Approved baselines",capture:"Capture baseline",label:"Baseline label",history:"Original vs current plan",name:"Activity",planned:"Baseline finish",current:"Current finish",start:"Actual start",finish:"Actual finish",percent:"Complete %",remaining:"Remaining days",note:"Note",save:"Save progress",select:"Select",empty:"No baselines captured yet.",readonly:"Read-only; only managers may edit.",help:"Baselines are immutable. Actual progress does not change Tasks completion."}
 };
-export function ProjectControls({projectId,activities,lang,writable}:{projectId:string;activities:Activity[];lang:Language;writable:boolean}){
+export function ProjectControls({projectId,activities,lang,writable,planning}:{projectId:string;activities:Activity[];lang:Language;writable:boolean;planning:QualityInput}){
   const t=words[lang],client=useQueryClient();
   const [label,setLabel]=useState("Baseline 1"),[selected,setSelected]=useState(""),[draft,setDraft]=useState<Draft|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
   const key=["planning-controls",projectId];
   const query=useQuery({queryKey:key,queryFn:()=>request<Snapshot>(`/api/planning/controls?projectId=${encodeURIComponent(projectId)}`),retry:false});
-  const data=query.data;const chosen=data?.baselines.find(x=>x.id===selected)||data?.baselines[0];
+  const data=query.data;
+  const issues=checkScheduleQuality({...planning,baselinesCount:data?.baselines.length??0});
+  const chosen=data?.baselines.find(x=>x.id===selected)||data?.baselines[0];
   async function submit(payload:object){
     setBusy(true);setError("");
     try{await request("/api/planning/controls",{method:"POST",body:JSON.stringify({...payload,projectId})});await client.invalidateQueries({queryKey:key});setDraft(null);}
@@ -34,6 +37,8 @@ export function ProjectControls({projectId,activities,lang,writable}:{projectId:
       {activities.map(a=>{const original=chosen?.snapshot.activities.find(x=>x.id===a.id);const p=data.progress.find(x=>x.activityId===a.id);return <tr key={a.id}><td>{a.code} · {a.name}</td><td dir="ltr">{original?.plannedFinish??"—"}</td><td dir="ltr">{a.plannedFinish??"—"}</td><td>{p?.percentComplete??0}%</td></tr>;})}
     </tbody></table></div></>}
     </>}
+    {data&&<><h3>{lang==="ar"?"جودة الجدول الزمني":"Schedule quality checks"} ({issues.length})</h3>
+     <div className="ep-stack">{issues.map((issue,i)=><p className={issue.kind==="error"?"ep-error":"ep-muted"} key={issue.code+"-"+i}>{issue.kind==="error"?"!":"•"} {issue.code}: {issue.message}</p>)}</div></>}
   </div><div className="ep-stack">{writable&&<form className="panel ep-card ep-form" onSubmit={e=>{e.preventDefault();void submit({action:"captureBaseline",label});}}>
     <h3>{t.capture}</h3><label>{t.label}<input required maxLength={100} value={label} onChange={e=>setLabel(e.target.value)}/></label><button className="button primary" type="submit" disabled={busy||!activities.length}>{t.capture}</button></form>}
     {writable&&<form className="panel ep-card ep-form" onSubmit={e=>{e.preventDefault();if(!draft)return;void submit({action:"updateProgress",data:{...draft,actualStart:draft.actualStart||null,actualFinish:draft.actualFinish||null}});}}>

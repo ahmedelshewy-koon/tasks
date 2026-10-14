@@ -165,7 +165,7 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
         </form>}
       </div>}
       {(["resources","costs","risks"] as const).includes(tab as "resources"|"costs"|"risks")&&<ProjectEnterprise projectId={project.id} lang={lang} writable={writable} tab={tab as "resources"|"costs"|"risks"}/>}
-      {tab==="control"&&<ProjectControls projectId={project.id} lang={lang} activities={data.activities} writable={writable}/>} 
+      {tab==="control"&&<ProjectControls projectId={project.id} lang={lang} activities={data.activities} writable={writable} planning={{activities:data.activities,wbs:data.wbs,relationships:data.relationships,calendars:data.calendars,baselinesCount:0}}/>} 
       {tab==="calendars"&&<div className="ep-grid">
         <div className="panel ep-card"><h3>{t.calendars} ({data.calendars.length})</h3>{data.calendars.length===0?<p className="ep-muted">{t.empty}</p>:data.calendars.map(c=><div className="ep-calendar" key={c.id}><div><strong>{c.name}</strong><p>{c.timeZone} · {c.minutesPerDay} min</p><p>{c.workingDays.map(d=>t.week[d]).join("، ")}</p>{data.exceptions.filter(x=>x.calendarId===c.id).map(x=><p key={x.id}>{x.day}: {x.isWorking?t.working:t.nonworking} {x.note}</p>)}</div>{writable&&<button type="button" className="ep-icon" onClick={()=>setCalendar({id:c.id,name:c.name,timeZone:c.timeZone,workingDays:c.workingDays,minutesPerDay:c.minutesPerDay})} aria-label={t.edit}><Pencil size={15}/></button>}</div>)}</div>
         {writable&&<div className="ep-stack"><form className="panel ep-card ep-form" onSubmit={e=>{e.preventDefault();void save("saveCalendar",calendar);}}>

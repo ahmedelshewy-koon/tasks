@@ -4,6 +4,7 @@ import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {request} from "./api";
 import type {Language} from "./i18n";
 import {calculateEarnedValue} from "../modules/planning/metrics";
+import {weeklyResourceLoad} from "../modules/planning/resource-load";
 import "./planning-view.css";
 type Resource={id:string;name:string;kind:"labor"|"equipment"|"material";hrUserId:string|null;capacityHoursWeek:number;rateMinor:number;currency:string};
 type Assignment={id:string;activityId:string;resourceId:string;plannedHours:number;allocationPercent:number};
@@ -38,6 +39,7 @@ export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:strin
  const d=query.data, baseline=d?.baselines.find(b=>b.id===baselineId)??d?.baselines[0];
  const currencies=[...new Set(d?.costs.map(c=>c.currency)??[])];
  const picked=currencies.includes(currency)?currency:currencies[0]??currency;
+ const load=d?weeklyResourceLoad({resources:d.resources,assignments:d.assignments,activities:d.activities}):null;
  const earned=d?calculateEarnedValue({costs:d.costs,progress:d.progress,currency:picked,dataDate:date,baseline:baseline?.snapshot.activities}):null;
  return <div className="ep-grid">
  <div className="panel ep-card">
@@ -47,7 +49,12 @@ export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:strin
       {d.resources.map(x=><tr key={x.id} onClick={()=>writable&&setResource({id:x.id,name:x.name,kind:x.kind,hrUserId:x.hrUserId??"",capacityHoursWeek:x.capacityHoursWeek,rateMinor:x.rateMinor,currency:x.currency})}><td>{x.name}</td><td>{t[x.kind]}</td><td>{x.capacityHoursWeek}</td><td>{money(x.rateMinor,x.currency,lang)}</td></tr>)}
     </tbody></table></div><h3>{t.assignments}</h3><div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.resource}</th><th>{t.activity}</th><th>{t.hours}</th><th>{t.percent}</th></tr></thead><tbody>
       {d.assignments.map(a=><tr key={a.id}><td>{d.resources.find(x=>x.id===a.resourceId)?.name}</td><td>{d.activities.find(x=>x.id===a.activityId)?.name}</td><td>{a.plannedHours}</td><td>{a.allocationPercent}%</td></tr>)}
-    </tbody></table></div></>}
+    </tbody></table></div>
+    {load&&<><h3>{lang==="ar"?"الضغط الأسبوعي على الموارد":"Weekly capacity preview"}</h3><p className="ep-muted">{lang==="ar"?"تقدير يوزع الساعات بالتساوي على أيام التقويم؛ لا ينفذ تسوية الموارد تلقائيًا.":"Estimated weekly allocation (even calendar-day spread), not automatic resource leveling."}</p>
+    <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.resource}</th><th>{lang==="ar"?"الأسبوع":"Week"}</th><th>{t.hours}</th><th>{t.capacity}</th></tr></thead><tbody>
+    {load.weeks.map(w=><tr key={w.resourceId+w.weekStart}><td>{d.resources.find(x=>x.id===w.resourceId)?.name}</td><td dir="ltr">{w.weekStart}</td><td className={w.overloaded?"ep-error":""}>{w.scheduledHours}</td><td>{w.capacityHours}</td></tr>)}
+    </tbody></table></div>{load.unplannedActivityIds.length>0&&<p className="ep-muted">{load.unplannedActivityIds.length} {lang==="ar"?"تخصيص بلا تواريخ مخططة":"assignment(s) without planned dates"}</p>}</>}
+   </>}
    {tab==="costs"&&<><h3>{t.costs}</h3>{!d.financeAllowed?<p className="ep-error">{lang==="ar"?"التكاليف متاحة فقط لمالك المشروع ومديره.":"Financial details are restricted to project owners and managers."}</p>:<><p className="ep-muted">{t.manual}</p>
     <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.name}</th><th>{t.budget}</th><th>{t.actual}</th></tr></thead><tbody>
       {d.costs.map(c=><tr key={c.id} onClick={()=>writable&&setCost({id:c.id,name:c.name,activityId:c.activityId??"",currency:c.currency,budgetMinor:c.budgetMinor,actualMinor:c.actualMinor})}><td>{c.name}</td><td>{money(c.budgetMinor,c.currency,lang)}</td><td>{money(c.actualMinor,c.currency,lang)}</td></tr>)}
