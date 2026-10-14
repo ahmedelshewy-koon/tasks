@@ -50,8 +50,10 @@ export function createPlanningService(db: Database, actor: Actor) {
       return fn(tx as Database);
     });
   }
-  async function sameProject(tx: Database, table: typeof s.planningWbs | typeof s.planningCalendars | typeof s.planningActivities, projectId: string, refId: string) {
-    const [item] = await tx.select().from(table).where(eq(table.id, refId));
+  async function sameProject(tx: Database, kind: "wbs" | "calendar", projectId: string, refId: string) {
+    const [item] = kind === "wbs"
+      ? await tx.select({ projectId:s.planningWbs.projectId }).from(s.planningWbs).where(eq(s.planningWbs.id,refId))
+      : await tx.select({ projectId:s.planningCalendars.projectId }).from(s.planningCalendars).where(eq(s.planningCalendars.id,refId));
     if (!item || item.projectId !== projectId) throw new AppError(400, "Reference must belong to this project.");
   }
   return {
@@ -73,7 +75,7 @@ export function createPlanningService(db: Database, actor: Actor) {
         const [existing] = v.id ? await tx.select().from(s.planningWbs).where(and(eq(s.planningWbs.id,v.id),eq(s.planningWbs.projectId,projectId))) : [];
         if (v.id && !existing) throw new AppError(404,"WBS node not found.");
         if (v.parentId) {
-          await sameProject(tx,s.planningWbs,projectId,v.parentId);
+          await sameProject(tx,"wbs",projectId,v.parentId);
           if (v.parentId === v.id) throw new AppError(400,"Circular WBS.");
           const nodes=await tx.select().from(s.planningWbs).where(eq(s.planningWbs.projectId,projectId));
           let parent:string|null=v.parentId;
@@ -108,7 +110,7 @@ export function createPlanningService(db: Database, actor: Actor) {
     async saveException(projectId:string,calendarId:string,payload:unknown) {
       const v=exceptionInput.parse(payload);
       return locked(projectId,async tx=>{
-        await sameProject(tx,s.planningCalendars,projectId,calendarId);
+        await sameProject(tx,"calendar",projectId,calendarId);
         const [existing]=await tx.select().from(s.planningCalendarExceptions).where(and(eq(s.planningCalendarExceptions.calendarId,calendarId),eq(s.planningCalendarExceptions.day,v.day)));
         const [row]=existing
           ? await tx.update(s.planningCalendarExceptions).set({isWorking:v.isWorking,note:v.note}).where(eq(s.planningCalendarExceptions.id,existing.id)).returning()
@@ -122,8 +124,8 @@ export function createPlanningService(db: Database, actor: Actor) {
       return locked(projectId,async tx=>{
         const [existing]=v.id ? await tx.select().from(s.planningActivities).where(and(eq(s.planningActivities.id,v.id),eq(s.planningActivities.projectId,projectId))) : [];
         if(v.id && !existing) throw new AppError(404,"Activity not found.");
-        if(v.wbsId) await sameProject(tx,s.planningWbs,projectId,v.wbsId);
-        if(v.calendarId) await sameProject(tx,s.planningCalendars,projectId,v.calendarId);
+        if(v.wbsId) await sameProject(tx,"wbs",projectId,v.wbsId);
+        if(v.calendarId) await sameProject(tx,"calendar",projectId,v.calendarId);
         if(v.taskId) {
           const [task]=await tx.select().from(s.tasks).where(eq(s.tasks.id,v.taskId));
           if(!task || task.projectId!==projectId || task.deletedAt || task.archivedAt) throw new AppError(400,"Task must be active and in this project.");
