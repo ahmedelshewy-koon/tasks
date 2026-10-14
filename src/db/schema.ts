@@ -433,3 +433,13 @@ export const planningRisks=pgTable("planning_risks",{
  response:text("response").notNull().default(""),
  createdAt:created(),
 },t=>[index("planning_risk_project_idx").on(t.projectId)]);
+
+/** Immutable schedule calculation snapshot. Never overwrites task dates. */
+export const planningScheduleRuns=pgTable("planning_schedule_runs",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ calendarId:uuid("calendar_id").notNull().references(()=>planningCalendars.id),
+ result:jsonb("result").notNull(),
+ createdBy:text("created_by").notNull().references(()=>users.id),
+ createdAt:created(),
+},t=>[index("planning_schedule_runs_project_idx").on(t.projectId)]);

@@ -44,6 +44,13 @@ describe("Phase 2 schedule relationships",()=>{
     await expect(svc("viewer").saveRelationship(projectId,{predecessorId:b,successorId:c,type:"SS"})).rejects.toThrow();
     await expect(svc("outsider").previewSchedule(projectId,calendarId)).rejects.toThrow();
   });
+  it("saves a read-only schedule run without changing original Tasks",async()=>{
+    const saved=await svc("owner").saveScheduleRun(projectId,calendarId);
+    expect((saved.result as {activities:unknown[]}).activities).toHaveLength(3);
+    expect((await svc("viewer").scheduleRuns(projectId))).toHaveLength(1);
+    await expect(svc("viewer").saveScheduleRun(projectId,calendarId)).rejects.toThrow();
+    expect((await db.select().from(schema.dependencies))).toEqual([]);
+  });
   it("handles updates and removal with an audit trail",async()=>{
     const link=(await svc("owner").snapshot(projectId)).relationships[0];
     const updated=await svc("owner").saveRelationship(projectId,{id:link.id,predecessorId:link.predecessorId,successorId:link.successorId,type:"SS",lagDays:1});

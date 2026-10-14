@@ -14,6 +14,7 @@ export async function GET(request:Request) {
     const projectId=uuid.parse(query.get("projectId"));
     const service=createPlanningService(await getDb(),actor);
     if(query.has("previewCalendar"))return NextResponse.json(await service.previewSchedule(projectId,uuid.parse(query.get("previewCalendar"))));
+    if(query.has("scheduleRuns"))return NextResponse.json(await service.scheduleRuns(projectId));
     return NextResponse.json(await service.snapshot(projectId));
   } catch(error) { return respondError(error); }
 }
@@ -24,7 +25,7 @@ export async function POST(request:Request) {
       return NextResponse.json({error:"Request is too large."},{status:413});
     const {actor}=await context();
     const body=z.object({
-      action:z.enum(["saveWbs","saveCalendar","saveException","saveActivity","saveRelationship","removeRelationship"]),
+      action:z.enum(["saveWbs","saveCalendar","saveException","saveActivity","saveRelationship","removeRelationship","saveScheduleRun"]),
       projectId:uuid,calendarId:uuid.optional(),relationshipId:uuid.optional(),data:z.unknown().optional(),
     }).strict().parse(await request.json());
     const service=createPlanningService(await getDb(),actor);
@@ -34,6 +35,7 @@ export async function POST(request:Request) {
       case "saveActivity": return NextResponse.json(await service.saveActivity(body.projectId,body.data));
       case "saveRelationship": return NextResponse.json(await service.saveRelationship(body.projectId,body.data));
       case "removeRelationship": return NextResponse.json(await service.removeRelationship(body.projectId,uuid.parse(body.relationshipId)));
+      case "saveScheduleRun": return NextResponse.json(await service.saveScheduleRun(body.projectId,uuid.parse(body.calendarId)));
       case "saveException":
         return NextResponse.json(await service.saveException(body.projectId,uuid.parse(body.calendarId),body.data));
     }

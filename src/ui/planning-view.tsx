@@ -67,6 +67,7 @@ export function ProjectPlanning({project,tasks,employees,lang}:{project:Project;
   const [exception,setException]=useState({calendarId:"",day:"",isWorking:false,note:""});
   const [link,setLink]=useState({predecessorId:"",successorId:"",type:"FS" as Relationship["type"],lagDays:0});
   const [previewId,setPreviewId]=useState(""),[preview,setPreview]=useState<Preview|null>(null);
+  const history=useQuery({queryKey:["planning-runs",project.id],queryFn:()=>request<{id:string;createdAt:string;calendarId:string;result:Preview}[]>(`/api/planning?projectId=${encodeURIComponent(project.id)}&scheduleRuns=1`),enabled:tab==="links",retry:false});
   const query=useQuery({queryKey:["project-planning",project.id],queryFn:()=>request<Snapshot>(`/api/planning?projectId=${encodeURIComponent(project.id)}`),retry:false});
   const data=query.data, writable=project.canManage&&!project.archivedAt;
   function exportCsv(){
@@ -151,6 +152,15 @@ export function ProjectPlanning({project,tasks,employees,lang}:{project:Project;
           <div className="ep-form">
             <label>{t.calendar}<select value={previewId} onChange={e=>setPreviewId(e.target.value)}><option value="">{t.none}</option>{data.calendars.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <button type="button" className="button secondary" disabled={saving||!previewId} onClick={()=>void calculate()}>{t.preview}</button>
+            {writable&&preview&&<button type="button" className="button primary" disabled={saving||!previewId} onClick={async()=>{
+              setSaving(true);setError("");
+              try{await request("/api/planning",{method:"POST",body:JSON.stringify({action:"saveScheduleRun",projectId:project.id,calendarId:previewId})});
+                await client.invalidateQueries({queryKey:["planning-runs",project.id]});
+              }catch(e){setError(errorMessage(e));}finally{setSaving(false);}
+            }}>{lang==="ar"?"حفظ نتيجة الجدولة":"Save schedule run"}</button>}
+            {history.data&&history.data.length>0&&<div><strong>{lang==="ar"?"سجل الحسابات المحفوظة":"Saved schedule calculations"}</strong>
+              {history.data.map(run=><p className="ep-muted" key={run.id}>{new Date(run.createdAt).toLocaleString(lang==="ar"?"ar-EG":"en-GB")} · {run.result.projectFinishDate??"—"}</p>)}</div>}
+
             {preview&&<><PreviewTimeline preview={preview} activities={data.activities} lang={lang}/><p><strong>{t.finishDate}:</strong> {preview.projectFinishDate??"—"}</p>
               <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.name}</th><th>{t.start}</th><th>{t.finish}</th><th>{t.float}</th></tr></thead><tbody>
                 {preview.activities.map(a=><tr key={a.id}><td>{data.activities.find(v=>v.id===a.id)?.name??a.id}{a.critical?" · "+t.critical:""}</td><td dir="ltr">{a.earlyStartDate}</td><td dir="ltr">{a.earlyFinishDate}</td><td>{a.totalFloatDays}</td></tr>)}

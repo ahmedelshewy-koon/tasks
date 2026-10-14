@@ -67,6 +67,30 @@ export function createPlanningService(db: Database, actor: Actor) {
       : await tx.select({ projectId:s.planningCalendars.projectId }).from(s.planningCalendars).where(eq(s.planningCalendars.id,refId));
     if (!item || item.projectId !== projectId) throw new AppError(400, "Reference must belong to this project.");
   }
+  async function computePreview(projectId: string, calendarId: string, source: Database) {
+      const project=await access(source,projectId);
+      if(!project.startDate) throw new AppError(409, "Set the project start date before scheduling.");
+      const [calendar]=await source.select().from(s.planningCalendars)
+        .where(and(eq(s.planningCalendars.id,calendarId),eq(s.planningCalendars.projectId,projectId)));
+      if(!calendar) throw new AppError(404, "Calendar not found.");
+      const [activities,links,exceptions]=await Promise.all([
+        source.select().from(s.planningActivities).where(eq(s.planningActivities.projectId,projectId)),
+        source.select().from(s.planningRelationships).where(eq(s.planningRelationships.projectId,projectId)),
+        source.select().from(s.planningCalendarExceptions).where(eq(s.planningCalendarExceptions.calendarId,calendarId)),
+      ]);
+      if(activities.some(a=>a.calendarId && a.calendarId!==calendarId))
+        throw new AppError(409, "This preview supports one shared calendar; another activity uses a different calendar.");
+      return {
+        projectId,calendarId,
+        ...calculateCpm({
+          activities:activities.map(a=>({id:a.id,durationDays:a.durationDays,notBeforeDate:a.constraintType==="snet"?a.constraintDate:null})),
+          relationships:links.map(l=>({predecessorId:l.predecessorId,successorId:l.successorId,type:l.type,lagDays:l.lagDays})),
+          startDate:project.startDate,
+          calendar:{workingDays:calendar.workingDays,exceptions:exceptions.map(x=>({day:x.day,isWorking:x.isWorking}))},
+        }),
+      };
+    }
+
   return {
     async snapshot(projectId: string) {
       await access(db, projectId);
@@ -198,28 +222,22 @@ export function createPlanningService(db: Database, actor: Actor) {
         return {deleted:true};
       });
     },
-    async previewSchedule(projectId: string, calendarId: string) {
-      const project=await access(db,projectId);
-      if(!project.startDate) throw new AppError(409, "Set the project start date before scheduling.");
-      const [calendar]=await db.select().from(s.planningCalendars)
-        .where(and(eq(s.planningCalendars.id,calendarId),eq(s.planningCalendars.projectId,projectId)));
-      if(!calendar) throw new AppError(404, "Calendar not found.");
-      const [activities,links,exceptions]=await Promise.all([
-        db.select().from(s.planningActivities).where(eq(s.planningActivities.projectId,projectId)),
-        db.select().from(s.planningRelationships).where(eq(s.planningRelationships.projectId,projectId)),
-        db.select().from(s.planningCalendarExceptions).where(eq(s.planningCalendarExceptions.calendarId,calendarId)),
-      ]);
-      if(activities.some(a=>a.calendarId && a.calendarId!==calendarId))
-        throw new AppError(409, "This preview supports one shared calendar; another activity uses a different calendar.");
-      return {
-        projectId,calendarId,
-        ...calculateCpm({
-          activities:activities.map(a=>({id:a.id,durationDays:a.durationDays,notBeforeDate:a.constraintType==="snet"?a.constraintDate:null})),
-          relationships:links.map(l=>({predecessorId:l.predecessorId,successorId:l.successorId,type:l.type,lagDays:l.lagDays})),
-          startDate:project.startDate,
-          calendar:{workingDays:calendar.workingDays,exceptions:exceptions.map(x=>({day:x.day,isWorking:x.isWorking}))},
-        }),
-      };
+    async previewSchedule(projectId:string,calendarId:string){
+      return computePreview(projectId,calendarId,db);
+    },
+    async saveScheduleRun(projectId:string,calendarId:string){
+      return locked(projectId,async tx=>{
+        const preview=await computePreview(projectId,calendarId,tx);
+        const [row]=await tx.insert(s.planningScheduleRuns).values({
+          projectId,calendarId,result:preview,createdBy:actor.userId,
+        }).returning();
+        await log(tx,projectId,"planning_schedule_run_saved",null,{id:row.id,calendarId,activityCount:preview.activities.length});
+        return row;
+      });
+    },
+    async scheduleRuns(projectId:string){
+      await access(db,projectId);
+      return db.select().from(s.planningScheduleRuns).where(eq(s.planningScheduleRuns.projectId,projectId));
     },
   };
 }

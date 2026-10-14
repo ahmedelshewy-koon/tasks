@@ -57,6 +57,13 @@
       "when": 1791983000000,
       "tag": "0007_planning_constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1791984000000,
+      "tag": "0008_planning_schedule_runs",
+      "breakpoints": true
     }
   ]
 }
