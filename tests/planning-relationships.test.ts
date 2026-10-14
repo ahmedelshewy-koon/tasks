@@ -46,7 +46,7 @@ describe("Phase 2 schedule relationships",()=>{
   });
   it("handles updates and removal with an audit trail",async()=>{
     const link=(await svc("owner").snapshot(projectId)).relationships[0];
-    const updated=await svc("owner").saveRelationship(projectId,{id:link.id,predecessorId:a,successorId:b,type:"SS",lagDays:1});
+    const updated=await svc("owner").saveRelationship(projectId,{id:link.id,predecessorId:link.predecessorId,successorId:link.successorId,type:"SS",lagDays:1});
     expect(updated.id).toBe(link.id);
     await svc("owner").removeRelationship(projectId,link.id);
     expect((await svc("owner").snapshot(projectId)).relationships).toHaveLength(1);
