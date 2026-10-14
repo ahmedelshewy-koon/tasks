@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CalendarDays, Layers3, ListChecks, Pencil, Plus, RotateCcw } from "lucide-react";
+import { CalendarDays, Layers3, ListChecks, GitBranch, Pencil, Plus, RotateCcw } from "lucide-react";
 import { request, type Project, type Task } from "./api";
 import type { Language } from "./i18n";
 import "./planning-view.css";
@@ -9,8 +9,10 @@ import "./planning-view.css";
 type Wbs = { id:string;code:string;name:string;parentId:string|null;position:number };
 type Calendar = { id:string;name:string;timeZone:string;workingDays:number[];minutesPerDay:number };
 type Activity = { id:string;code:string;name:string;type:"task"|"milestone";wbsId:string|null;taskId:string|null;calendarId:string|null;durationDays:number;plannedStart:string|null;plannedFinish:string|null };
+type Relationship = {id:string;predecessorId:string;successorId:string;type:"FS"|"SS"|"FF"|"SF";lagDays:number};
+type Preview = {projectFinishDate:string|null;activities:{id:string;earlyStartDate:string;earlyFinishDate:string;totalFloatDays:number;critical:boolean}[]};
 type Exception = { id:string;calendarId:string;day:string;isWorking:boolean;note:string };
-type Snapshot = {wbs:Wbs[];calendars:Calendar[];activities:Activity[];exceptions:Exception[]};
+type Snapshot = {wbs:Wbs[];calendars:Calendar[];activities:Activity[];relationships:Relationship[];exceptions:Exception[]};
 type WbsForm = {id?:string;code:string;name:string;parentId:string;position:number};
 type CalendarForm = {id?:string;name:string;timeZone:string;workingDays:number[];minutesPerDay:number};
 type ActivityForm = {id?:string;code:string;name:string;type:"task"|"milestone";wbsId:string;taskId:string;calendarId:string;durationDays:number;plannedStart:string;plannedFinish:string};
@@ -19,36 +21,49 @@ const blankCalendar=():CalendarForm=>({name:"",timeZone:"Africa/Cairo",workingDa
 const blankActivity=():ActivityForm=>({code:"",name:"",type:"task",wbsId:"",taskId:"",calendarId:"",durationDays:1,plannedStart:"",plannedFinish:""});
 const nullable=(s:string)=>s||null;
 const text={
-  en:{heading:"Project planning",explain:"Planning dates are independent of existing task dates.",wbs:"WBS",activities:"Activities",calendars:"Calendars",code:"Code",name:"Name",parent:"Parent",none:"None",order:"Order",type:"Type",duration:"Duration in working days",start:"Planned start",finish:"Planned finish",linkedTask:"Linked task",calendar:"Calendar",timeZone:"IANA time zone",minutes:"Working minutes/day",days:"Working days",date:"Exception date",working:"Working day",nonworking:"Non-working day",note:"Note",addException:"Save exception",exception:"Calendar exceptions",save:"Save",edit:"Edit",reset:"Clear form",loading:"Loading planning data…",empty:"No planning records yet.",readonly:"Only project managers can edit planning data.",error:"Planning data unavailable. The additive migration must be verified in staging before rollout.",task:"Task",milestone:"Milestone",week:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
-  ar:{heading:"تخطيط المشروع",explain:"تواريخ التخطيط مستقلة عن تواريخ المهام الموجودة.",wbs:"هيكل العمل WBS",activities:"الأنشطة",calendars:"التقاويم",code:"الكود",name:"الاسم",parent:"المستوى الأعلى",none:"بدون",order:"الترتيب",type:"النوع",duration:"المدة بأيام العمل",start:"البداية المخططة",finish:"النهاية المخططة",linkedTask:"المهمة المرتبطة",calendar:"التقويم",timeZone:"المنطقة الزمنية",minutes:"دقائق العمل اليومية",days:"أيام العمل",date:"تاريخ الاستثناء",working:"يوم عمل",nonworking:"إجازة",note:"ملاحظة",addException:"حفظ الاستثناء",exception:"استثناءات التقويم",save:"حفظ",edit:"تعديل",reset:"إفراغ النموذج",loading:"جاري تحميل بيانات التخطيط…",empty:"لا توجد بيانات تخطيط بعد.",readonly:"التعديل متاح لمدير المشروع فقط.",error:"بيانات التخطيط غير متاحة. يجب اعتماد Migration الإضافي في بيئة الاختبار أولًا.",task:"نشاط",milestone:"معلم",week:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]},
+  en:{heading:"Project planning",explain:"Planning dates are independent of existing task dates.",wbs:"WBS",activities:"Activities",calendars:"Calendars",links:"Dependencies",preview:"Calculate CPM preview",finishDate:"Project finish",float:"Total float",critical:"Critical",remove:"Remove",code:"Code",name:"Name",parent:"Parent",none:"None",order:"Order",type:"Type",duration:"Duration in working days",start:"Planned start",finish:"Planned finish",linkedTask:"Linked task",calendar:"Calendar",timeZone:"IANA time zone",minutes:"Working minutes/day",days:"Working days",date:"Exception date",working:"Working day",nonworking:"Non-working day",note:"Note",addException:"Save exception",exception:"Calendar exceptions",save:"Save",edit:"Edit",reset:"Clear form",loading:"Loading planning data…",empty:"No planning records yet.",readonly:"Only project managers can edit planning data.",error:"Planning data unavailable. The additive migration must be verified in staging before rollout.",task:"Task",milestone:"Milestone",week:["Sun","Mon","Tue","Wed","Thu","Fri","Sat"]},
+  ar:{heading:"تخطيط المشروع",explain:"تواريخ التخطيط مستقلة عن تواريخ المهام الموجودة.",wbs:"هيكل العمل WBS",activities:"الأنشطة",calendars:"التقاويم",links:"الاعتماديات",preview:"حساب المسار الحرج",finishDate:"نهاية المشروع",float:"السماح الزمني",critical:"حرج",remove:"حذف",code:"الكود",name:"الاسم",parent:"المستوى الأعلى",none:"بدون",order:"الترتيب",type:"النوع",duration:"المدة بأيام العمل",start:"البداية المخططة",finish:"النهاية المخططة",linkedTask:"المهمة المرتبطة",calendar:"التقويم",timeZone:"المنطقة الزمنية",minutes:"دقائق العمل اليومية",days:"أيام العمل",date:"تاريخ الاستثناء",working:"يوم عمل",nonworking:"إجازة",note:"ملاحظة",addException:"حفظ الاستثناء",exception:"استثناءات التقويم",save:"حفظ",edit:"تعديل",reset:"إفراغ النموذج",loading:"جاري تحميل بيانات التخطيط…",empty:"لا توجد بيانات تخطيط بعد.",readonly:"التعديل متاح لمدير المشروع فقط.",error:"بيانات التخطيط غير متاحة. يجب اعتماد Migration الإضافي في بيئة الاختبار أولًا.",task:"نشاط",milestone:"معلم",week:["الأحد","الإثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"]},
 } as const;
 const errorMessage=(error:unknown)=>error instanceof Error?error.message:"Request failed";
 
 export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task[];lang:Language}) {
   const t=text[lang], client=useQueryClient();
-  const [tab,setTab]=useState<"wbs"|"activities"|"calendars">("wbs");
+  const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links">("wbs");
   const [saving,setSaving]=useState(false),[error,setError]=useState("");
   const [wbs,setWbs]=useState<WbsForm>(blankWbs),[activity,setActivity]=useState<ActivityForm>(blankActivity),[calendar,setCalendar]=useState<CalendarForm>(blankCalendar);
   const [exception,setException]=useState({calendarId:"",day:"",isWorking:false,note:""});
+  const [link,setLink]=useState({predecessorId:"",successorId:"",type:"FS" as Relationship["type"],lagDays:0});
+  const [previewId,setPreviewId]=useState(""),[preview,setPreview]=useState<Preview|null>(null);
   const query=useQuery({queryKey:["project-planning",project.id],queryFn:()=>request<Snapshot>(`/api/planning?projectId=${encodeURIComponent(project.id)}`),retry:false});
   const data=query.data, writable=project.canManage&&!project.archivedAt;
-  async function save(action:string, payload:object, calendarId?:string) {
-    setSaving(true);setError("");
+  async function save(action:string, payload:object, calendarId?:string, relationshipId?:string) {
+    setSaving(true);setError("");setPreview(null);
     try {
-      await request("/api/planning",{method:"POST",body:JSON.stringify({action,projectId:project.id,calendarId,data:payload})});
+      await request("/api/planning",{method:"POST",body:JSON.stringify({action,projectId:project.id,calendarId,relationshipId,data:payload})});
       await client.invalidateQueries({queryKey:["project-planning",project.id]});
       if(action==="saveWbs")setWbs(blankWbs());
       if(action==="saveActivity")setActivity(blankActivity());
       if(action==="saveCalendar")setCalendar(blankCalendar());
       if(action==="saveException")setException({calendarId:"",day:"",isWorking:false,note:""});
+      if(action==="saveRelationship")setLink({predecessorId:"",successorId:"",type:"FS",lagDays:0});
     } catch(e){setError(errorMessage(e));}
     finally{setSaving(false);}
+  }
+  async function calculate() {
+    setSaving(true);setError("");setPreview(null);
+    try {setPreview(await request<Preview>(`/api/planning?projectId=${encodeURIComponent(project.id)}&previewCalendar=${encodeURIComponent(previewId)}`));}
+    catch(e){setError(errorMessage(e));}
+    finally{setSaving(false);}
+  }
+  async function removeRelationship(id:string) {
+    await save("removeRelationship",{},undefined,id);
   }
   return <section className="ep-workspace" aria-label={t.heading}>
     <div className="ep-heading"><div><h2>{t.heading}</h2><p>{t.explain}</p></div><button className="button secondary" type="button" onClick={()=>void query.refetch()} disabled={query.isFetching} aria-label="Refresh"><RotateCcw size={16}/></button></div>
     <div className="ep-tabs" role="tablist">
       <button role="tab" aria-selected={tab==="wbs"} className={tab==="wbs"?"active":""} onClick={()=>setTab("wbs")}><Layers3 size={15}/>{t.wbs}</button>
       <button role="tab" aria-selected={tab==="activities"} className={tab==="activities"?"active":""} onClick={()=>setTab("activities")}><ListChecks size={15}/>{t.activities}</button>
+      <button role="tab" aria-selected={tab==="links"} className={tab==="links"?"active":""} onClick={()=>setTab("links")}><GitBranch size={15}/>{t.links}</button>
       <button role="tab" aria-selected={tab==="calendars"} className={tab==="calendars"?"active":""} onClick={()=>setTab("calendars")}><CalendarDays size={15}/>{t.calendars}</button>
     </div>
     {query.isPending?<div className="panel ep-card">{t.loading}</div>:query.isError?<div className="panel ep-card ep-error" role="alert">{t.error}<p>{errorMessage(query.error)}</p></div>:data&&<>
@@ -78,6 +93,30 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
           <label>{t.linkedTask}<select value={activity.taskId} onChange={e=>setActivity({...activity,taskId:e.target.value})}><option value="">{t.none}</option>{tasks.filter(x=>!data.activities.some(a=>a.taskId===x.id&&a.id!==activity.id)).map(x=><option key={x.id} value={x.id}>{x.title}</option>)}</select></label>
           <div className="ep-two"><label>{t.start}<input type="date" value={activity.plannedStart} onChange={e=>setActivity({...activity,plannedStart:e.target.value})}/></label><label>{t.finish}<input type="date" value={activity.plannedFinish} onChange={e=>setActivity({...activity,plannedFinish:e.target.value})}/></label></div>
           <div className="ep-actions"><button className="button primary" type="submit" disabled={saving}><Plus size={14}/>{t.save}</button><button className="button secondary" type="button" onClick={()=>setActivity(blankActivity())}>{t.reset}</button></div>
+        </form>}
+      </div>}
+            {tab==="links"&&<div className="ep-grid">
+        <div className="panel ep-card"><h3>{t.links} ({data.relationships.length})</h3>
+          {data.relationships.length===0?<p className="ep-muted">{t.empty}</p>:<div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.parent}</th><th>{t.name}</th><th>{t.type}</th><th>Lag</th>{writable&&<th>{t.remove}</th>}</tr></thead><tbody>
+          {data.relationships.map(r=><tr key={r.id}><td>{data.activities.find(a=>a.id===r.predecessorId)?.code??"—"}</td><td>{data.activities.find(a=>a.id===r.successorId)?.code??"—"}</td><td>{r.type}</td><td>{r.lagDays}</td>{writable&&<td><button type="button" className="ep-icon" aria-label={t.remove} onClick={()=>void removeRelationship(r.id)} disabled={saving}>{t.remove}</button></td>}</tr>)}
+          </tbody></table></div>}
+          <div className="ep-form">
+            <label>{t.calendar}<select value={previewId} onChange={e=>setPreviewId(e.target.value)}><option value="">{t.none}</option>{data.calendars.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
+            <button type="button" className="button secondary" disabled={saving||!previewId} onClick={()=>void calculate()}>{t.preview}</button>
+            {preview&&<><p><strong>{t.finishDate}:</strong> {preview.projectFinishDate??"—"}</p>
+              <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.name}</th><th>{t.start}</th><th>{t.finish}</th><th>{t.float}</th></tr></thead><tbody>
+                {preview.activities.map(a=><tr key={a.id}><td>{data.activities.find(v=>v.id===a.id)?.name??a.id}{a.critical?" · "+t.critical:""}</td><td dir="ltr">{a.earlyStartDate}</td><td dir="ltr">{a.earlyFinishDate}</td><td>{a.totalFloatDays}</td></tr>)}
+              </tbody></table></div>
+            </>}
+          </div>
+        </div>
+        {writable&&<form className="panel ep-card ep-form" onSubmit={e=>{e.preventDefault();void save("saveRelationship",link);}}>
+          <h3>{t.links}</h3>
+          <label>{t.parent}<select required value={link.predecessorId} onChange={e=>setLink({...link,predecessorId:e.target.value})}><option value="">{t.none}</option>{data.activities.map(a=><option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}</select></label>
+          <label>{t.name}<select required value={link.successorId} onChange={e=>setLink({...link,successorId:e.target.value})}><option value="">{t.none}</option>{data.activities.filter(a=>a.id!==link.predecessorId).map(a=><option key={a.id} value={a.id}>{a.code} · {a.name}</option>)}</select></label>
+          <div className="ep-two"><label>{t.type}<select value={link.type} onChange={e=>setLink({...link,type:e.target.value as Relationship["type"]})}>{(["FS","SS","FF","SF"] as const).map(type=><option key={type}>{type}</option>)}</select></label>
+          <label>Lag ({t.duration})<input type="number" min={-36500} max={36500} required value={link.lagDays} onChange={e=>setLink({...link,lagDays:Number(e.target.value)})}/></label></div>
+          <button className="button primary" type="submit" disabled={saving}><Plus size={14}/>{t.save}</button>
         </form>}
       </div>}
       {tab==="calendars"&&<div className="ep-grid">

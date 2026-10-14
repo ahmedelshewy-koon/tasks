@@ -21,7 +21,7 @@ Status: Phase 0 audited; Phase 1 schema, API, and planning UI implemented increm
 
 ## Release policy / rollback
 - Keep all work in `feature/enterprise-project-planning` and open a **draft** PR. Do not merge to main, deploy, or run production migrations without explicit approval.
-- Before staging migration: capture a database-specific consistent backup, verify restore on a disposable instance, record table counts and original IDs, then run `0003_planning_foundation.sql` in staging. Production needs a new approval and a restore-tested backup.
+- Before staging migration: capture a database-specific consistent backup, verify restore on a disposable instance, record table counts and original IDs, then run `0003_planning_foundation.sql` and `0004_planning_relationships.sql` in staging. Production needs a new approval and a restore-tested backup.
 - A deployment rollback is an application rollback to the previous commit; **do not drop new tables** to revert the application. Keep additive schema until a separately approved cleanup.
 - Note: local PGlite automatically migrates on application start for development; a feature-branch checkout in a development environment will add the new tables. PostgreSQL production migrations are explicit.
 - CI/test validation required before merge: `npm run typecheck`, `npm test`, `npm run build`, API permission checks, PGlite migration verification, RTL visual regression, production PostgreSQL concurrency/load checks.
@@ -31,7 +31,8 @@ Status: Phase 0 audited; Phase 1 schema, API, and planning UI implemented increm
 - Project working calendars with IANA time zone, workdays, hours/day and date exceptions.
 - Independent schedule activities with code, optional WBS/task/calendar links, duration, type, and **manually provided** planned dates.
 - Project-scoped authorized API and audit events. New WBS/activity/calendar tab in the existing project UI (same Sanaa tokens, AR/EN). Existing task Gantt and task models remain unchanged.
-- Scheduling calculations, SS/FF/SF relationships, progress control, baselines, resource and cost functionality are **not** implemented in this slice and are intentionally deferred.
+- Phase 2 preview foundation: separate schedule relationship table (FS/SS/FF/SF), lag, cycle checks and a read-only CPM preview with early/late dates and total float. A single shared project calendar and project start date are required. This is not a full P6 scheduling engine, and preview **does not modify** manual planned dates or Tasks.
+- Advanced constraints, multiple activity calendars, resource leveling, persistence of schedule runs, progress control, baselines, and costing remain deferred.
 
 ## Next slices
 1. Phase 1 verification: install dependencies, run typecheck/test/build/RTL browser regression and PostgreSQL staging migration checks. The new planning UI must not be merged until these pass.
