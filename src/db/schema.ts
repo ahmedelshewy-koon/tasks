@@ -92,6 +92,9 @@ export const tasks = pgTable(
       .notNull()
       .default("medium"),
     dueDate: date("due_date"),
+    siteEstimateMinutes: integer("site_estimate_minutes"),
+    siteStartedAt: timestamp("site_started_at", { withTimezone: true }),
+    siteExpectedEndAt: timestamp("site_expected_end_at", { withTimezone: true }),
     reminderMinutes: integer("reminder_minutes").notNull().default(1440),
     milestoneId: uuid("milestone_id").references(() => milestones.id),
     recurrence: text("recurrence", { enum: ["daily", "weekly", "monthly"] }),
