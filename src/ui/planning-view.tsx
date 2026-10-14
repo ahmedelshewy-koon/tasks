@@ -26,6 +26,36 @@ const text={
 } as const;
 const errorMessage=(error:unknown)=>error instanceof Error?error.message:"Request failed";
 
+function PreviewTimeline({ preview, activities, lang }: { preview: Preview; activities: Activity[]; lang: Language }) {
+  if (!preview.activities.length) return null;
+  const dates = preview.activities.flatMap(a => [a.earlyStartDate, a.earlyFinishDate]);
+  const start = Math.min(...dates.map(d => Date.parse(d+"T00:00:00Z")));
+  const end = Math.max(...dates.map(d => Date.parse(d+"T00:00:00Z")));
+  const day = 86400000;
+  const span = Math.max(1,Math.round((end-start)/day)+1);
+  const pixels = Math.max(440,span*26);
+  const x = (date:string) => Math.round((Date.parse(date+"T00:00:00Z")-start)/day)*26;
+  const fmt=(date:string)=>new Intl.DateTimeFormat(lang==="ar"?"ar-EG":"en-GB",{day:"numeric",month:"short",timeZone:"UTC"}).format(new Date(date+"T00:00:00Z"));
+  const ordered=preview.activities.slice().sort((a,b)=>a.earlyStartDate.localeCompare(b.earlyStartDate));
+  return <div className="ep-timeline" aria-label={lang==="ar"?"المخطط الزمني للمشروع":"Project schedule Gantt preview"}>
+    <div className="ep-timeline-label">{lang==="ar"?"مخطط Gantt المحسوب — للمعاينة":"Calculated Gantt — preview only"}</div>
+    <div className="ep-timeline-scroll"><div style={{minWidth:pixels+195}}>
+      <div className="ep-timeline-head"><span>{lang==="ar"?"النشاط":"Activity"}</span><span>{fmt(new Date(start).toISOString().slice(0,10))} — {fmt(new Date(end).toISOString().slice(0,10))}</span></div>
+      {ordered.map(row => {
+        const activity=activities.find(a=>a.id===row.id);
+        const offset=x(row.earlyStartDate), length=Math.max(8,x(row.earlyFinishDate)-offset+26);
+        return <div className="ep-timeline-row" key={row.id}>
+          <span className="ep-timeline-name" title={activity?.name??row.id}>{activity?.code??row.id} · {activity?.name}</span>
+          <div className="ep-timeline-track" style={{width:pixels}}>
+            <span className={row.critical?"ep-timeline-bar critical":"ep-timeline-bar"} style={{insetInlineStart:offset,width:length}} title={`${row.earlyStartDate} → ${row.earlyFinishDate} | Float: ${row.totalFloatDays}`}/>
+          </div>
+        </div>;
+      })}
+    </div></div>
+    <p className="ep-muted">{lang==="ar"?"الأخضر الداكن = المسار الحرج. هذا العرض لا يغيّر التواريخ الحالية.":"Dark green = critical path. This preview does not change existing task dates."}</p>
+  </div>;
+}
+
 export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task[];lang:Language}) {
   const t=text[lang], client=useQueryClient();
   const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links">("wbs");
@@ -103,7 +133,7 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
           <div className="ep-form">
             <label>{t.calendar}<select value={previewId} onChange={e=>setPreviewId(e.target.value)}><option value="">{t.none}</option>{data.calendars.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <button type="button" className="button secondary" disabled={saving||!previewId} onClick={()=>void calculate()}>{t.preview}</button>
-            {preview&&<><p><strong>{t.finishDate}:</strong> {preview.projectFinishDate??"—"}</p>
+            {preview&&<><PreviewTimeline preview={preview} activities={data.activities} lang={lang}/><p><strong>{t.finishDate}:</strong> {preview.projectFinishDate??"—"}</p>
               <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.name}</th><th>{t.start}</th><th>{t.finish}</th><th>{t.float}</th></tr></thead><tbody>
                 {preview.activities.map(a=><tr key={a.id}><td>{data.activities.find(v=>v.id===a.id)?.name??a.id}{a.critical?" · "+t.critical:""}</td><td dir="ltr">{a.earlyStartDate}</td><td dir="ltr">{a.earlyFinishDate}</td><td>{a.totalFloatDays}</td></tr>)}
               </tbody></table></div>
