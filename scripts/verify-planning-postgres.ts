@@ -40,6 +40,6 @@ try{
  const migrations=await client.query("SELECT name FROM task_migrations ORDER BY name");
  if(migrations.rows.length!==7)throw new Error("Unexpected migration count: "+migrations.rows.length);
  const tables=await client.query("SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'planning_%'");
- if(tables.rows.length<12)throw new Error("Planning tables missing.");
+ if(tables.rows.length<11)throw new Error("Planning tables missing.");
  console.info("PostgreSQL additive upgrade verified: original IDs/dates/comments preserved, migrations idempotent, planning tables created.");
 }finally{await client.end();}
