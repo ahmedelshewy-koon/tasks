@@ -180,7 +180,7 @@ export function TaskForm({
                   onChange={(event) =>
                     setAssigned((ids) =>
                       event.target.checked
-                        ? [...ids, e.userId]
+                        ? (siteDispatch ? [e.userId] : [...ids, e.userId])
                         : ids.filter((id) => id !== e.userId),
                     )
                   }
