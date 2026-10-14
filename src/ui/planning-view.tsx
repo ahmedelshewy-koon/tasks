@@ -5,6 +5,7 @@ import { CalendarDays, Layers3, ListChecks, GitBranch, Pencil, Plus, RotateCcw }
 import { request, type Project, type Task } from "./api";
 import type { Language } from "./i18n";
 import "./planning-view.css";
+import { ProjectControls } from "./project-controls";
 
 type Wbs = { id:string;code:string;name:string;parentId:string|null;position:number };
 type Calendar = { id:string;name:string;timeZone:string;workingDays:number[];minutesPerDay:number };
@@ -58,7 +59,7 @@ function PreviewTimeline({ preview, activities, lang }: { preview: Preview; acti
 
 export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task[];lang:Language}) {
   const t=text[lang], client=useQueryClient();
-  const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links">("wbs");
+  const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links"|"control">("wbs");
   const [saving,setSaving]=useState(false),[error,setError]=useState("");
   const [wbs,setWbs]=useState<WbsForm>(blankWbs),[activity,setActivity]=useState<ActivityForm>(blankActivity),[calendar,setCalendar]=useState<CalendarForm>(blankCalendar);
   const [exception,setException]=useState({calendarId:"",day:"",isWorking:false,note:""});
@@ -94,6 +95,7 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
       <button role="tab" aria-selected={tab==="wbs"} className={tab==="wbs"?"active":""} onClick={()=>setTab("wbs")}><Layers3 size={15}/>{t.wbs}</button>
       <button role="tab" aria-selected={tab==="activities"} className={tab==="activities"?"active":""} onClick={()=>setTab("activities")}><ListChecks size={15}/>{t.activities}</button>
       <button role="tab" aria-selected={tab==="links"} className={tab==="links"?"active":""} onClick={()=>setTab("links")}><GitBranch size={15}/>{t.links}</button>
+      <button role="tab" aria-selected={tab==="control"} className={tab==="control"?"active":""} onClick={()=>setTab("control")}>{lang==="ar"?"خط الأساس والتقدم":"Baselines & Progress"}</button>
       <button role="tab" aria-selected={tab==="calendars"} className={tab==="calendars"?"active":""} onClick={()=>setTab("calendars")}><CalendarDays size={15}/>{t.calendars}</button>
     </div>
     {query.isPending?<div className="panel ep-card">{t.loading}</div>:query.isError?<div className="panel ep-card ep-error" role="alert">{t.error}<p>{errorMessage(query.error)}</p></div>:data&&<>
@@ -149,6 +151,7 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
           <button className="button primary" type="submit" disabled={saving}><Plus size={14}/>{t.save}</button>
         </form>}
       </div>}
+      {tab==="control"&&<ProjectControls projectId={project.id} lang={lang} activities={data.activities} writable={writable}/>} 
       {tab==="calendars"&&<div className="ep-grid">
         <div className="panel ep-card"><h3>{t.calendars} ({data.calendars.length})</h3>{data.calendars.length===0?<p className="ep-muted">{t.empty}</p>:data.calendars.map(c=><div className="ep-calendar" key={c.id}><div><strong>{c.name}</strong><p>{c.timeZone} · {c.minutesPerDay} min</p><p>{c.workingDays.map(d=>t.week[d]).join("، ")}</p>{data.exceptions.filter(x=>x.calendarId===c.id).map(x=><p key={x.id}>{x.day}: {x.isWorking?t.working:t.nonworking} {x.note}</p>)}</div>{writable&&<button type="button" className="ep-icon" onClick={()=>setCalendar({id:c.id,name:c.name,timeZone:c.timeZone,workingDays:c.workingDays,minutesPerDay:c.minutesPerDay})} aria-label={t.edit}><Pencil size={15}/></button>}</div>)}</div>
         {writable&&<div className="ep-stack"><form className="panel ep-card ep-form" onSubmit={e=>{e.preventDefault();void save("saveCalendar",calendar);}}>
