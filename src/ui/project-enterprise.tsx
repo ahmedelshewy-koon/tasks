@@ -12,7 +12,7 @@ type Risk={id:string;title:string;probability:number;impact:number;status:"open"
 type Activity={id:string;code:string;name:string;plannedStart:string|null;plannedFinish:string|null};
 type Progress={activityId:string;percentComplete:number};
 type Baseline={snapshot:{activities:Activity[]};label:string;id:string};
-type Data={resources:Resource[];assignments:Assignment[];costs:Cost[];risks:Risk[];progress:Progress[];baselines:Baseline[];activities:Activity[]};
+type Data={resources:Resource[];assignments:Assignment[];costs:Cost[];risks:Risk[];progress:Progress[];baselines:Baseline[];activities:Activity[];financeAllowed:boolean};
 const words={
  ar:{resources:"الموارد",costs:"الميزانية والتكاليف",risks:"المخاطر",assignments:"توزيع الموارد",save:"حفظ",name:"الاسم",kind:"النوع",labor:"موظف",equipment:"معدة",material:"مادة",hr:"معرف الموظف في HR (اختياري)",capacity:"الساعات المتاحة أسبوعيًا",rate:"سعر الساعة بأصغر وحدة نقدية",currency:"العملة",resource:"المورد",activity:"النشاط",hours:"الساعات المخططة",percent:"نسبة التخصيص",budget:"الميزانية",actual:"التكلفة الفعلية",risk:"الخطر",impact:"التأثير",probability:"الاحتمالية",response:"خطة الاستجابة",status:"الحالة",open:"مفتوح",mitigating:"تحت المعالجة",closed:"مغلق",none:"بدون",edit:"تعديل",evm:"مؤشرات القيمة المكتسبة",nodata:"لا توجد بيانات.",manual:"القيم المالية تُسجّل يدويًا، ولا يتم سحبها من ERP تلقائيًا.",limitation:"PV وSPI يتطلبان خط أساس محددًا بتواريخ صحيحة. لا يتم جمع العملات المختلفة.",plannedDate:"تاريخ التقييم",selectedBaseline:"خط الأساس",missing:"غير متاح",readonly:"عرض فقط — التعديل لمدير المشروع."},
  en:{resources:"Resources",costs:"Budget & costs",risks:"Risks",assignments:"Resource assignments",save:"Save",name:"Name",kind:"Kind",labor:"Labor",equipment:"Equipment",material:"Material",hr:"HR employee reference (optional)",capacity:"Available hours/week",rate:"Hourly rate in minor currency units",currency:"Currency",resource:"Resource",activity:"Activity",hours:"Planned hours",percent:"Allocation percent",budget:"Budget",actual:"Actual cost",risk:"Risk",impact:"Impact",probability:"Probability",response:"Mitigation",status:"Status",open:"Open",mitigating:"Mitigating",closed:"Closed",none:"None",edit:"Edit",evm:"Earned value metrics",nodata:"No records yet.",manual:"Costs are manually entered; there is no automatic ERP sync.",limitation:"PV and SPI require a dated baseline. Different currencies are never added together.",plannedDate:"Data date",selectedBaseline:"Baseline",missing:"N/A",readonly:"Read only — editing is for managers."},
@@ -48,7 +48,7 @@ export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:strin
     </tbody></table></div><h3>{t.assignments}</h3><div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.resource}</th><th>{t.activity}</th><th>{t.hours}</th><th>{t.percent}</th></tr></thead><tbody>
       {d.assignments.map(a=><tr key={a.id}><td>{d.resources.find(x=>x.id===a.resourceId)?.name}</td><td>{d.activities.find(x=>x.id===a.activityId)?.name}</td><td>{a.plannedHours}</td><td>{a.allocationPercent}%</td></tr>)}
     </tbody></table></div></>}
-   {tab==="costs"&&<><h3>{t.costs}</h3><p className="ep-muted">{t.manual}</p>
+   {tab==="costs"&&<><h3>{t.costs}</h3>{!d.financeAllowed?<p className="ep-error">{lang==="ar"?"التكاليف متاحة فقط لمالك المشروع ومديره.":"Financial details are restricted to project owners and managers."}</p>:<><p className="ep-muted">{t.manual}</p>
     <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.name}</th><th>{t.budget}</th><th>{t.actual}</th></tr></thead><tbody>
       {d.costs.map(c=><tr key={c.id} onClick={()=>writable&&setCost({id:c.id,name:c.name,activityId:c.activityId??"",currency:c.currency,budgetMinor:c.budgetMinor,actualMinor:c.actualMinor})}><td>{c.name}</td><td>{money(c.budgetMinor,c.currency,lang)}</td><td>{money(c.actualMinor,c.currency,lang)}</td></tr>)}
     </tbody></table></div>
@@ -59,7 +59,7 @@ export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:strin
       <label className="ep-control-label">{t.selectedBaseline}<select value={baseline?.id??""} onChange={e=>setBaselineId(e.target.value)}><option value="">{t.none}</option>{d.baselines.map(b=><option key={b.id} value={b.id}>{b.label}</option>)}</select></label>
     </div>
     <div className="ep-metric-grid">{earned&&(["BAC","AC","EV","PV","CPI","SPI","CV","SV"] as const).map(key=><div className="ep-metric" key={key}><strong>{key}</strong><span>{earned[key]===null?t.missing:["CPI","SPI"].includes(key)?Number(earned[key]).toFixed(2):money(Number(earned[key]),picked,lang)}</span></div>)}</div>
-    <p className="ep-muted">{t.limitation}</p>
+    <p className="ep-muted">{t.limitation}</p></>}
    </>}
    {tab==="risks"&&<><h3>{t.risks} ({d.risks.length})</h3>
     <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.risk}</th><th>{t.probability}</th><th>{t.impact}</th><th>{t.status}</th></tr></thead><tbody>

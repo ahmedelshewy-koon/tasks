@@ -52,7 +52,9 @@ export function createEnterprisePlanning(db:Database,actor:Actor){
  }
  return {
   async snapshot(projectId:string){
-   await access(db,projectId);
+   const project=await access(db,projectId);
+   const [member]=await db.select().from(s.members).where(and(eq(s.members.projectId,projectId),eq(s.members.userId,actor.userId)));
+   const financeAllowed=actor.isAdmin||project.ownerId===actor.userId||member?.role==="project_manager";
    const [resources,assignments,costs,risks,progress,baselines,activities]=await Promise.all([
     db.select().from(s.planningResources).where(eq(s.planningResources.projectId,projectId)),
     db.select().from(s.planningResourceAssignments).where(eq(s.planningResourceAssignments.projectId,projectId)),
@@ -62,7 +64,7 @@ export function createEnterprisePlanning(db:Database,actor:Actor){
     db.select().from(s.planningBaselines).where(eq(s.planningBaselines.projectId,projectId)),
     db.select().from(s.planningActivities).where(eq(s.planningActivities.projectId,projectId)),
    ]);
-   return {resources,assignments,costs,risks,progress,baselines,activities};
+   return {resources:financeAllowed?resources:resources.map(r=>({...r,rateMinor:0})),assignments,costs:financeAllowed?costs:[],risks,progress,baselines,activities,financeAllowed};
   },
   async saveResource(projectId:string,payload:unknown){
    const v=resourceInput.parse(payload);

@@ -7,6 +7,7 @@ import type { Language } from "./i18n";
 import "./planning-view.css";
 import { ProjectControls } from "./project-controls";
 import { ProjectEnterprise } from "./project-enterprise";
+import { planningActivitiesCsv } from "../modules/planning/export";
 
 type Wbs = { id:string;code:string;name:string;parentId:string|null;position:number };
 type Calendar = { id:string;name:string;timeZone:string;workingDays:number[];minutesPerDay:number };
@@ -68,6 +69,16 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
   const [previewId,setPreviewId]=useState(""),[preview,setPreview]=useState<Preview|null>(null);
   const query=useQuery({queryKey:["project-planning",project.id],queryFn:()=>request<Snapshot>(`/api/planning?projectId=${encodeURIComponent(project.id)}`),retry:false});
   const data=query.data, writable=project.canManage&&!project.archivedAt;
+  function exportCsv(){
+    if(!data)return;
+    const csv=planningActivitiesCsv(data.activities,data.wbs);
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const link=document.createElement("a");
+    link.href=url;link.download="sanaa-planning-"+project.id+".csv";
+    document.body.appendChild(link);link.click();link.remove();URL.revokeObjectURL(url);
+  }
+
   async function save(action:string, payload:object, calendarId?:string, relationshipId?:string) {
     setSaving(true);setError("");setPreview(null);
     try {
@@ -91,7 +102,7 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
     await save("removeRelationship",{},undefined,id);
   }
   return <section className="ep-workspace" aria-label={t.heading}>
-    <div className="ep-heading"><div><h2>{t.heading}</h2><p>{t.explain}</p></div><button className="button secondary" type="button" onClick={()=>void query.refetch()} disabled={query.isFetching} aria-label="Refresh"><RotateCcw size={16}/></button></div>
+    <div className="ep-heading"><div><h2>{t.heading}</h2><p>{t.explain}</p></div><div className="ep-actions"><button className="button secondary" type="button" disabled={!data} onClick={exportCsv}>{lang==="ar"?"تصدير CSV":"Export CSV"}</button><button className="button secondary" type="button" onClick={()=>void query.refetch()} disabled={query.isFetching} aria-label="Refresh"><RotateCcw size={16}/></button></div></div>
     <div className="ep-tabs" role="tablist">
       <button role="tab" aria-selected={tab==="wbs"} className={tab==="wbs"?"active":""} onClick={()=>setTab("wbs")}><Layers3 size={15}/>{t.wbs}</button>
       <button role="tab" aria-selected={tab==="activities"} className={tab==="activities"?"active":""} onClick={()=>setTab("activities")}><ListChecks size={15}/>{t.activities}</button>

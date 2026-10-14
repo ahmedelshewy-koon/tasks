@@ -28,6 +28,8 @@ describe("enterprise resource cost and risk controls",()=>{
  it("records manual costs with fixed minor currency units",async()=>{
   const cost=await svc("owner").saveCost(projectId,{name:"Contract",activityId,budgetMinor:100000,actualMinor:60000,currency:"SAR"});
   expect(cost.budgetMinor).toBe(100000);
+  expect((await svc("viewer").snapshot(projectId)).costs).toHaveLength(0);
+  expect((await svc("owner").snapshot(projectId)).costs).toHaveLength(1);
   await expect(svc("owner").saveCost(projectId,{name:"Invalid",budgetMinor:-1,actualMinor:0,currency:"SAR"})).rejects.toThrow();
   await expect(svc("owner").saveCost(projectId,{name:"Wrong",activityId,budgetMinor:10,actualMinor:0,currency:"usd"})).rejects.toThrow();
   await expect(svc("owner").saveCost(otherId,{name:"Wrong",activityId,budgetMinor:10,actualMinor:0,currency:"SAR"})).rejects.toThrow();
