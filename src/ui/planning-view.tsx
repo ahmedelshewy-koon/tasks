@@ -7,6 +7,7 @@ import type { Language } from "./i18n";
 import "./planning-view.css";
 import { ProjectControls } from "./project-controls";
 import { ProjectEnterprise } from "./project-enterprise";
+import { ProjectApprovals } from "./project-approvals";
 import { planningActivitiesCsv } from "../modules/planning/export";
 
 type Wbs = { id:string;code:string;name:string;parentId:string|null;position:number };
@@ -61,7 +62,7 @@ function PreviewTimeline({ preview, activities, lang }: { preview: Preview; acti
 
 export function ProjectPlanning({project,tasks,employees,lang}:{project:Project;tasks:Task[];employees:Workspace["employees"];lang:Language}) {
   const t=text[lang], client=useQueryClient();
-  const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links"|"control"|"resources"|"costs"|"risks">("wbs");
+  const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links"|"control"|"resources"|"costs"|"risks"|"approvals">("wbs");
   const [saving,setSaving]=useState(false),[error,setError]=useState("");
   const [wbs,setWbs]=useState<WbsForm>(blankWbs),[activity,setActivity]=useState<ActivityForm>(blankActivity),[calendar,setCalendar]=useState<CalendarForm>(blankCalendar);
   const [exception,setException]=useState({calendarId:"",day:"",isWorking:false,note:""});
@@ -108,6 +109,7 @@ export function ProjectPlanning({project,tasks,employees,lang}:{project:Project;
       <button role="tab" aria-selected={tab==="wbs"} className={tab==="wbs"?"active":""} onClick={()=>setTab("wbs")}><Layers3 size={15}/>{t.wbs}</button>
       <button role="tab" aria-selected={tab==="activities"} className={tab==="activities"?"active":""} onClick={()=>setTab("activities")}><ListChecks size={15}/>{t.activities}</button>
       <button role="tab" aria-selected={tab==="links"} className={tab==="links"?"active":""} onClick={()=>setTab("links")}><GitBranch size={15}/>{t.links}</button>
+      {writable&&<button role="tab" aria-selected={tab==="approvals"} className={tab==="approvals"?"active":""} onClick={()=>setTab("approvals")}>{lang==="ar"?"الموافقات والتغييرات":"Approvals & Changes"}</button>}
       <button role="tab" aria-selected={tab==="control"} className={tab==="control"?"active":""} onClick={()=>setTab("control")}>{lang==="ar"?"خط الأساس والتقدم":"Baselines & Progress"}</button>
       {(["resources","costs","risks"] as const).map(id=><button key={id} role="tab" aria-selected={tab===id} className={tab===id?"active":""} onClick={()=>setTab(id)}>{lang==="ar"?({resources:"الموارد",costs:"التكاليف",risks:"المخاطر"} as const)[id]:({resources:"Resources",costs:"Costs",risks:"Risks"} as const)[id]}</button>)}
       <button role="tab" aria-selected={tab==="calendars"} className={tab==="calendars"?"active":""} onClick={()=>setTab("calendars")}><CalendarDays size={15}/>{t.calendars}</button>
@@ -178,6 +180,7 @@ export function ProjectPlanning({project,tasks,employees,lang}:{project:Project;
         </form>}
       </div>}
       {(["resources","costs","risks"] as const).includes(tab as "resources"|"costs"|"risks")&&<ProjectEnterprise projectId={project.id} lang={lang} writable={writable} tab={tab as "resources"|"costs"|"risks"} employees={employees.filter(e=>e.userId===project.ownerId||project.memberIds.includes(e.userId))}/>}
+      {tab==="approvals"&&<ProjectApprovals projectId={project.id} lang={lang} writable={writable}/>}
       {tab==="control"&&<ProjectControls projectId={project.id} lang={lang} activities={data.activities} writable={writable} planning={{activities:data.activities,wbs:data.wbs,relationships:data.relationships,calendars:data.calendars,baselinesCount:0}}/>} 
       {tab==="calendars"&&<div className="ep-grid">
         <div className="panel ep-card"><h3>{t.calendars} ({data.calendars.length})</h3>{data.calendars.length===0?<p className="ep-muted">{t.empty}</p>:data.calendars.map(c=><div className="ep-calendar" key={c.id}><div><strong>{c.name}</strong><p>{c.timeZone} · {c.minutesPerDay} min</p><p>{c.workingDays.map(d=>t.week[d]).join("، ")}</p>{data.exceptions.filter(x=>x.calendarId===c.id).map(x=><p key={x.id}>{x.day}: {x.isWorking?t.working:t.nonworking} {x.note}</p>)}</div>{writable&&<button type="button" className="ep-icon" onClick={()=>setCalendar({id:c.id,name:c.name,timeZone:c.timeZone,workingDays:c.workingDays,minutesPerDay:c.minutesPerDay})} aria-label={t.edit}><Pencil size={15}/></button>}</div>)}</div>
