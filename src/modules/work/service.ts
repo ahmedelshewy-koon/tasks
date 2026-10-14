@@ -419,6 +419,8 @@ export function createService(
   // Removes a task and everything that belongs only to it. Admin-only callers.
   async function purgeTasks(tx: Database, ids: string[]) {
     if (!ids.length) return;
+    // Preserve independent planning activities when an individual task is purged.
+    await tx.update(s.planningActivities).set({ taskId: null }).where(inArray(s.planningActivities.taskId, ids));
     await tx
       .delete(s.notifications)
       .where(inArray(s.notifications.taskId, ids));
@@ -1407,6 +1409,23 @@ export function createService(
           .select({ id: s.tasks.id })
           .from(s.tasks)
           .where(eq(s.tasks.projectId, id));
+        // Explicit permanent project purge: remove dependent planning records in FK order.
+        await tx.delete(s.planningResourceAssignments).where(eq(s.planningResourceAssignments.projectId, id));
+        await tx.delete(s.planningProgress).where(eq(s.planningProgress.projectId, id));
+        await tx.delete(s.planningRelationships).where(eq(s.planningRelationships.projectId, id));
+        await tx.delete(s.planningCostItems).where(eq(s.planningCostItems.projectId, id));
+        await tx.delete(s.planningRisks).where(eq(s.planningRisks.projectId, id));
+        await tx.delete(s.planningBaselines).where(eq(s.planningBaselines.projectId, id));
+        await tx.delete(s.planningActivities).where(eq(s.planningActivities.projectId, id));
+        const calendars = await tx.select({id:s.planningCalendars.id})
+          .from(s.planningCalendars).where(eq(s.planningCalendars.projectId, id));
+        if (calendars.length) await tx.delete(s.planningCalendarExceptions)
+          .where(inArray(s.planningCalendarExceptions.calendarId,calendars.map(c=>c.id)));
+        await tx.delete(s.planningResources).where(eq(s.planningResources.projectId, id));
+        await tx.delete(s.planningCalendars).where(eq(s.planningCalendars.projectId, id));
+        // Break self-referential WBS parent links before bulk deletion.
+        await tx.update(s.planningWbs).set({parentId:null}).where(eq(s.planningWbs.projectId,id));
+        await tx.delete(s.planningWbs).where(eq(s.planningWbs.projectId,id));
         await purgeTasks(
           tx,
           rows.map((r) => r.id),
