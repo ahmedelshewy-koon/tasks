@@ -23,3 +23,32 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+  postgres-upgrade:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: task_ci
+          POSTGRES_PASSWORD: ci_only
+          POSTGRES_DB: task_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U task_ci -d task_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - name: Verify additive upgrade on isolated PostgreSQL
+        env:
+          CI: "true"
+          DATABASE_URL: postgres://task_ci:ci_only@127.0.0.1:5432/task_ci
+        run: npx tsx scripts/verify-planning-postgres.ts
