@@ -21,6 +21,14 @@ The new `Planning` view is additive; archived projects are read-only.
 10. Project/task hard purge lifecycle adjusted in existing service to safely manage planning foreign keys, with regression tests.
 11. Two-person, auditable **change request and baseline approval** decisions. Requests can be submitted by project managers/owners; decisions require owner or admin, distinct from the requester (and the author for baselines). Approval never automatically modifies a schedule, task or budget. EVM uses only approved baselines.
 
+## Site dispatch (optional field-service assignments)
+- The Site Dispatch dashboard filters project workers by HR job title and current availability.
+- A manager can start a one-worker site task with an estimated duration. Active assignment makes the worker busy across projects.
+- Completing that worker's part frees them. Passing the estimated finish never automatically frees them: overruns remain visible.
+- The API hides titles/IDs for work in other projects.
+- Uses existing task assignment and status logic plus optional minute/time columns in migration 0010_site_dispatch.sql.
+- This is an initial task-based roster, not HR leave/attendance, work shifts, travel dispatch or GPS.
+
 ## Limits — DO NOT describe this as full Oracle Primavera P6 parity
 - CPM is integer *working-day* scheduling with one common calendar for each preview; per-activity calendars are stored but preview rejects mismatched calendars. Intraday shifts and complex calendar lag semantics are not supported.
 - Only SNET scheduling constraint is supported; P6's other constraint families, data-date actualization, multiple float paths and global change are not implemented.
@@ -35,7 +43,7 @@ The new `Planning` view is additive; archived projects are read-only.
 - `npm run typecheck`
 - `npm test`
 - `npm run build`
-- Isolated PostgreSQL service: upgrade from schema 0002 to migrations 0003–0009, preserve IDs/dates/comments, rerun idempotently.
+- Isolated PostgreSQL service: upgrade from schema 0002 to migrations 0003–0010, preserve IDs/dates/comments, rerun idempotently.
 - Isolated Playwright smoke using development-only identities, English desktop and Arabic mobile RTL.
 
 ## Manual pre-release gates
