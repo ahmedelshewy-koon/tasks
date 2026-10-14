@@ -390,3 +390,44 @@ export const planningProgress = pgTable("planning_progress", {
   updatedBy: text("updated_by").notNull().references(() => users.id),
   updatedAt: timestamp("updated_at",{withTimezone:true}).notNull().defaultNow(),
 },t=>[index("planning_progress_project_idx").on(t.projectId)]);
+
+/** Manual planning resources. HR identities are optional external references, not HR mutations. */
+export const planningResources = pgTable("planning_resources",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ name:text("name").notNull(),
+ kind:text("kind",{enum:["labor","equipment","material"]}).notNull(),
+ hrUserId:text("hr_user_id"),
+ capacityHoursWeek:integer("capacity_hours_week").notNull().default(40),
+ rateMinor:integer("rate_minor").notNull().default(0),
+ currency:text("currency").notNull().default("SAR"),
+ createdAt:created(),
+},t=>[index("planning_resources_project_idx").on(t.projectId)]);
+export const planningResourceAssignments=pgTable("planning_resource_assignments",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ activityId:uuid("activity_id").notNull().references(()=>planningActivities.id),
+ resourceId:uuid("resource_id").notNull().references(()=>planningResources.id),
+ plannedHours:integer("planned_hours").notNull().default(0),
+ allocationPercent:integer("allocation_percent").notNull().default(100),
+},t=>[uniqueIndex("planning_assignment_unique_idx").on(t.activityId,t.resourceId),index("planning_assignment_project_idx").on(t.projectId)]);
+export const planningCostItems=pgTable("planning_cost_items",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ activityId:uuid("activity_id").references(()=>planningActivities.id),
+ name:text("name").notNull(),
+ currency:text("currency").notNull(),
+ budgetMinor:integer("budget_minor").notNull().default(0),
+ actualMinor:integer("actual_minor").notNull().default(0),
+ createdAt:created(),
+},t=>[index("planning_cost_project_idx").on(t.projectId)]);
+export const planningRisks=pgTable("planning_risks",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ title:text("title").notNull(),
+ probability:integer("probability").notNull(),
+ impact:integer("impact").notNull(),
+ status:text("status",{enum:["open","mitigating","closed"]}).notNull().default("open"),
+ response:text("response").notNull().default(""),
+ createdAt:created(),
+},t=>[index("planning_risk_project_idx").on(t.projectId)]);

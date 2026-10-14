@@ -43,6 +43,13 @@
       "when": 1791981000000,
       "tag": "0005_planning_controls",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1791982000000,
+      "tag": "0006_planning_enterprise",
+      "breakpoints": true
     }
   ]
 }
