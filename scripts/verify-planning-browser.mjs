@@ -23,7 +23,7 @@ const planning=async(action,data,extra={})=>{
 try{
  const login=await context.request.post(base+"/api/auth",{headers:{origin:base},data:{token:"local-admin"}});
  assert.equal(login.status(),200,"local development sign-in");
- const project=await command("createProject",{name:"Planning browser CI",startDate:"2026-10-18",memberIds:[]});
+ const project=await command("createProject",{name:"Planning browser CI",startDate:"2026-10-18",memberIds:["local-employee","local-colleague"]});
  projectId=project.id;
  const root=await planning("saveWbs",{code:"1",name:"Engineering"});
  const calendar=await planning("saveCalendar",{name:"Cairo standard",timeZone:"Africa/Cairo",workingDays:[0,1,2,3,4],minutesPerDay:480});
@@ -56,6 +56,18 @@ try{
  await page.getByRole("heading",{name:"Earned value metrics"}).waitFor();
  await page.getByRole("tab",{name:"Risks"}).click();
  await page.getByRole("heading",{name:"Risks",exact:false}).first().waitFor();
+ // Site dispatch is a separate, manager-only workforce availability view.
+ const siteJob=await command("createTask",{
+  title:"Repair site switchgear",projectId,assigneeIds:["local-employee"],
+  status:"in_progress",siteDispatch:true,siteEstimateMinutes:90,
+ });
+ assert.ok(siteJob.siteStartedAt&&siteJob.siteExpectedEndAt);
+ await page.goto(base+"/?page=site-dispatch");
+ await page.getByRole("heading",{name:"Site Dispatch"}).waitFor();
+ await page.getByText("Repair site switchgear",{exact:true}).waitFor();
+ await page.getByText("Busy",{exact:true}).first().waitFor();
+ await page.getByText("Available",{exact:true}).first().waitFor();
+ await page.screenshot({path:".data/verification/site-dispatch-en.png",fullPage:true});
  await page.goto(base+"/?page=portfolio");
  await page.getByRole("heading",{name:"Project Portfolio"}).waitFor();
  await mkdir(".data/verification",{recursive:true});
