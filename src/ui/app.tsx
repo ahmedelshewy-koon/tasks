@@ -32,6 +32,7 @@ import {
   LayoutGrid,
   Map as MapIcon,
   GanttChart,
+  BriefcaseBusiness,
   Layers3,
   List,
   LogOut,
@@ -96,9 +97,11 @@ import { SanaaBrand } from "./sanaa-brand";
 import { ProjectRoadmap } from "./project-roadmap";
 import { ProjectGantt } from "./project-gantt";
 import { ProjectPlanning } from "./planning-view";
+import { PortfolioView } from "./portfolio";
 import "./project-gantt.css";
 type PageName =
   | "reports"
+  | "portfolio"
   | "dashboard"
   | "my-tasks"
   | "projects"
@@ -114,6 +117,7 @@ const nav = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "my-tasks", label: "My Tasks", icon: CheckSquare2 },
   { id: "projects", label: "Projects", icon: FolderOpen },
+  { id: "portfolio", label: "Portfolio", icon: BriefcaseBusiness },
   { id: "team", label: "Team Tasks", icon: Users },
   { id: "my-team", label: "My Team", icon: Users },
   { id: "workload", label: "Workload", icon: Gauge },
@@ -886,6 +890,7 @@ function WorkspaceApp({
                       )}
                     </>
                   )}
+                  {page === "portfolio" && <PortfolioView data={data} lang={lang} onProject={id=>go("projects",id)}/>}
                   {page === "reports" && (
                     <Reports data={data} t={t} lang={lang} onOpen={setTaskId} />
                   )}
