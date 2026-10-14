@@ -1415,6 +1415,8 @@ export function createService(
         await tx.delete(s.planningRelationships).where(eq(s.planningRelationships.projectId, id));
         await tx.delete(s.planningCostItems).where(eq(s.planningCostItems.projectId, id));
         await tx.delete(s.planningRisks).where(eq(s.planningRisks.projectId, id));
+        await tx.delete(s.planningChangeRequests).where(eq(s.planningChangeRequests.projectId,id));
+        await tx.delete(s.planningBaselineReviews).where(eq(s.planningBaselineReviews.projectId,id));
         await tx.delete(s.planningBaselines).where(eq(s.planningBaselines.projectId, id));
         await tx.delete(s.planningActivities).where(eq(s.planningActivities.projectId, id));
         const calendars = await tx.select({id:s.planningCalendars.id})

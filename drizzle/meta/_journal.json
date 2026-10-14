@@ -64,6 +64,13 @@
       "when": 1791984000000,
       "tag": "0008_planning_schedule_runs",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1791985000000,
+      "tag": "0009_planning_approvals",
+      "breakpoints": true
     }
   ]
 }

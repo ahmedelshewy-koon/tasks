@@ -443,3 +443,32 @@ export const planningScheduleRuns=pgTable("planning_schedule_runs",{
  createdBy:text("created_by").notNull().references(()=>users.id),
  createdAt:created(),
 },t=>[index("planning_schedule_runs_project_idx").on(t.projectId)]);
+
+/** Approval decisions are distinct from execution: review never auto-mutates the project. */
+export const planningChangeRequests = pgTable("planning_change_requests",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ kind:text("kind",{enum:["scope","schedule","budget","resource"]}).notNull(),
+ title:text("title").notNull(),
+ description:text("description").notNull(),
+ impactDays:integer("impact_days").notNull().default(0),
+ impactMinor:integer("impact_minor").notNull().default(0),
+ currency:text("currency").notNull().default("SAR"),
+ status:text("status",{enum:["pending","approved","rejected"]}).notNull().default("pending"),
+ requestedBy:text("requested_by").notNull().references(()=>users.id),
+ reviewedBy:text("reviewed_by").references(()=>users.id),
+ reviewedAt:timestamp("reviewed_at",{withTimezone:true}),
+ decisionNote:text("decision_note").notNull().default(""),
+ createdAt:created(),
+},t=>[index("planning_change_requests_project_idx").on(t.projectId)]);
+export const planningBaselineReviews = pgTable("planning_baseline_reviews",{
+ id:uuid("id").primaryKey().defaultRandom(),
+ projectId:uuid("project_id").notNull().references(()=>projects.id),
+ baselineId:uuid("baseline_id").notNull().unique().references(()=>planningBaselines.id),
+ status:text("status",{enum:["pending","approved","rejected"]}).notNull().default("pending"),
+ requestedBy:text("requested_by").notNull().references(()=>users.id),
+ reviewedBy:text("reviewed_by").references(()=>users.id),
+ reviewedAt:timestamp("reviewed_at",{withTimezone:true}),
+ decisionNote:text("decision_note").notNull().default(""),
+ createdAt:created(),
+},t=>[index("planning_baseline_reviews_project_idx").on(t.projectId)]);
