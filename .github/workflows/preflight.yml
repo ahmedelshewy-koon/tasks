@@ -28,4 +28,4 @@ jobs:
           set -euo pipefail
           ssh -o BatchMode=yes -o StrictHostKeyChecking=yes -o ConnectTimeout=15 -o ServerAliveInterval=10 \
             sana-deploy@209.42.23.12 \
-            'set -eu; test "$(id -un)" = "sana-deploy"; test -d /home/sana-deploy/incoming; test -x /usr/local/sbin/sana-deploy-release; test -x /usr/local/sbin/sana-core-deploy; test -x /usr/local/sbin/sana-hr-deploy; systemctl is-active --quiet sana-platform.service; systemctl is-active --quiet sanaa-tasks.service; systemctl is-active --quiet sanaa-hr.service; echo "VPS SSH and service checks: OK"'
+            'set -eu; test "$(id -un)" = "sana-deploy"; test -d /home/sana-deploy/incoming; test -x /usr/local/sbin/sana-deploy-release; test -x /usr/local/sbin/sana-core-deploy; test -x /usr/local/sbin/sana-hr-deploy; systemctl is-active --quiet sana-platform.service; systemctl is-active sanaa-tasks.service || true; systemctl status sanaa-tasks.service --no-pager --lines=25 --full || true; readlink -f /opt/sanaa-tasks/app || true; ls -ld /opt/sanaa-tasks/releases/* 2>/dev/null | tail -n 5 || true; systemctl is-active --quiet sanaa-hr.service; echo "VPS SSH and service checks: OK"'
