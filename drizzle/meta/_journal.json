@@ -29,6 +29,13 @@
       "when": 1791971400000,
       "tag": "0003_planning_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791980000000,
+      "tag": "0004_planning_relationships",
+      "breakpoints": true
     }
   ]
 }

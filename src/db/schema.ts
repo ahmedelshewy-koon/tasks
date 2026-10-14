@@ -350,3 +350,21 @@ export const planningActivities = pgTable(
     index("planning_activity_calendar_idx").on(t.calendarId),
   ],
 );
+
+/** Engineering schedule links; never substitutes for task_dependencies. */
+export const planningRelationships = pgTable(
+  "planning_relationships",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id").notNull().references(() => projects.id),
+    predecessorId: uuid("predecessor_id").notNull().references(() => planningActivities.id),
+    successorId: uuid("successor_id").notNull().references(() => planningActivities.id),
+    type: text("type", {enum:["FS","SS","FF","SF"]}).notNull(),
+    lagDays: integer("lag_days").notNull().default(0),
+    createdAt: created(),
+  },
+  (t) => [
+    uniqueIndex("planning_relationship_pair_type_idx").on(t.predecessorId,t.successorId,t.type),
+    index("planning_relationships_project_idx").on(t.projectId),
+  ],
+);
