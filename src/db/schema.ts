@@ -9,6 +9,8 @@ import {
   jsonb,
   primaryKey,
   index,
+  uniqueIndex,
+  type AnyPgColumn,
   customType,
 } from "drizzle-orm/pg-core";
 const bytes = customType<{ data: Buffer }>({
@@ -276,3 +278,75 @@ export const savedViews = pgTable("saved_views", {
   config: jsonb("config").notNull(),
   createdAt: created(),
 });
+
+/*
+ * Enterprise planning is deliberately additive. Historical task created/due
+ * dates retain their original meaning, while planned dates live here.
+ */
+export const planningWbs = pgTable(
+  "planning_wbs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id").notNull().references(() => projects.id),
+    parentId: uuid("parent_id").references((): AnyPgColumn => planningWbs.id),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    position: integer("position").notNull().default(0),
+    createdAt: created(),
+  },
+  (t) => [
+    uniqueIndex("planning_wbs_project_code_idx").on(t.projectId, t.code),
+    index("planning_wbs_parent_idx").on(t.parentId),
+  ],
+);
+export const planningCalendars = pgTable(
+  "planning_calendars",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id").notNull().references(() => projects.id),
+    name: text("name").notNull(),
+    timeZone: text("time_zone").notNull(),
+    workingDays: jsonb("working_days").$type<number[]>().notNull(),
+    minutesPerDay: integer("minutes_per_day").notNull(),
+    createdAt: created(),
+  },
+  (t) => [
+    uniqueIndex("planning_calendars_project_name_idx").on(t.projectId, t.name),
+  ],
+);
+export const planningCalendarExceptions = pgTable(
+  "planning_calendar_exceptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    calendarId: uuid("calendar_id").notNull().references(() => planningCalendars.id),
+    day: date("day").notNull(),
+    isWorking: boolean("is_working").notNull(),
+    note: text("note").notNull().default(""),
+  },
+  (t) => [
+    uniqueIndex("planning_calendar_exception_day_idx").on(t.calendarId, t.day),
+  ],
+);
+export const planningActivities = pgTable(
+  "planning_activities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    projectId: uuid("project_id").notNull().references(() => projects.id),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    type: text("type", { enum: ["task", "milestone"] }).notNull().default("task"),
+    wbsId: uuid("wbs_id").references(() => planningWbs.id),
+    taskId: uuid("task_id").references(() => tasks.id),
+    calendarId: uuid("calendar_id").references(() => planningCalendars.id),
+    durationDays: integer("duration_days").notNull().default(1),
+    plannedStart: date("planned_start"),
+    plannedFinish: date("planned_finish"),
+    createdAt: created(),
+  },
+  (t) => [
+    uniqueIndex("planning_activity_project_code_idx").on(t.projectId, t.code),
+    uniqueIndex("planning_activity_task_idx").on(t.taskId),
+    index("planning_activity_wbs_idx").on(t.wbsId),
+    index("planning_activity_calendar_idx").on(t.calendarId),
+  ],
+);
