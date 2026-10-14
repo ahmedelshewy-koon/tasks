@@ -740,7 +740,7 @@ function WorkspaceApp({
                               onView={setView}
                             />
                           ) : view === "planning" && currentProject ? (
-                            <ProjectPlanning key={currentProject.id} project={currentProject} tasks={pageTasks} lang={lang} />
+                            <ProjectPlanning key={currentProject.id} project={currentProject} tasks={pageTasks} employees={data.employees} lang={lang} />
                           ) : view === "activity" && currentProject ? (
                             <section className="panel feed-panel">
                               <ProjectActivity

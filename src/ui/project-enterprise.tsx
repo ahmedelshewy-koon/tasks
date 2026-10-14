@@ -3,6 +3,7 @@ import {useState} from "react";
 import {useQuery,useQueryClient} from "@tanstack/react-query";
 import {request} from "./api";
 import type {Language} from "./i18n";
+import type {Workspace} from "./api";
 import {calculateEarnedValue} from "../modules/planning/metrics";
 import {weeklyResourceLoad} from "../modules/planning/resource-load";
 import "./planning-view.css";
@@ -19,7 +20,7 @@ const words={
  en:{resources:"Resources",costs:"Budget & costs",risks:"Risks",assignments:"Resource assignments",save:"Save",name:"Name",kind:"Kind",labor:"Labor",equipment:"Equipment",material:"Material",hr:"HR employee reference (optional)",capacity:"Available hours/week",rate:"Hourly rate in minor currency units",currency:"Currency",resource:"Resource",activity:"Activity",hours:"Planned hours",percent:"Allocation percent",budget:"Budget",actual:"Actual cost",risk:"Risk",impact:"Impact",probability:"Probability",response:"Mitigation",status:"Status",open:"Open",mitigating:"Mitigating",closed:"Closed",none:"None",edit:"Edit",evm:"Earned value metrics",nodata:"No records yet.",manual:"Costs are manually entered; there is no automatic ERP sync.",limitation:"PV and SPI require a dated baseline. Different currencies are never added together.",plannedDate:"Data date",selectedBaseline:"Baseline",missing:"N/A",readonly:"Read only — editing is for managers."},
 };
 const money=(minor:number,currency:string,lang:Language)=>new Intl.NumberFormat(lang==="ar"?"ar-EG":"en-GB",{minimumFractionDigits:2,maximumFractionDigits:2}).format(minor/100)+" "+currency;
-export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:string;lang:Language;writable:boolean;tab:"resources"|"costs"|"risks"}){
+export function ProjectEnterprise({projectId,lang,writable,tab,employees}:{projectId:string;lang:Language;writable:boolean;tab:"resources"|"costs"|"risks";employees:Workspace["employees"]}){
  const t=words[lang],client=useQueryClient(),key=["planning-enterprise",projectId];
  const query=useQuery({queryKey:key,queryFn:()=>request<Data>(`/api/planning/enterprise?projectId=${encodeURIComponent(projectId)}`),retry:false});
  const [busy,setBusy]=useState(false),[error,setError]=useState("");
@@ -46,7 +47,7 @@ export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:strin
    {query.isPending?<p>…</p>:query.isError?<p className="ep-error" role="alert">{String(query.error)}</p>:d&&<>
    {tab==="resources"&&<><h3>{t.resources} ({d.resources.length})</h3>
     <div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.name}</th><th>{t.kind}</th><th>{t.capacity}</th><th>{t.rate}</th></tr></thead><tbody>
-      {d.resources.map(x=><tr key={x.id} onClick={()=>writable&&setResource({id:x.id,name:x.name,kind:x.kind,hrUserId:x.hrUserId??"",capacityHoursWeek:x.capacityHoursWeek,rateMinor:x.rateMinor,currency:x.currency})}><td>{x.name}</td><td>{t[x.kind]}</td><td>{x.capacityHoursWeek}</td><td>{money(x.rateMinor,x.currency,lang)}</td></tr>)}
+      {d.resources.map(x=><tr key={x.id} onClick={()=>writable&&setResource({id:x.id,name:x.name,kind:x.kind,hrUserId:x.hrUserId??"",capacityHoursWeek:x.capacityHoursWeek,rateMinor:x.rateMinor,currency:x.currency})}><td>{x.name}</td><td>{t[x.kind]}</td><td>{x.capacityHoursWeek}</td><td>{d.financeAllowed?money(x.rateMinor,x.currency,lang):"—"}</td></tr>)}
     </tbody></table></div><h3>{t.assignments}</h3><div className="ep-scroll"><table className="ep-table"><thead><tr><th>{t.resource}</th><th>{t.activity}</th><th>{t.hours}</th><th>{t.percent}</th></tr></thead><tbody>
       {d.assignments.map(a=><tr key={a.id}><td>{d.resources.find(x=>x.id===a.resourceId)?.name}</td><td>{d.activities.find(x=>x.id===a.activityId)?.name}</td><td>{a.plannedHours}</td><td>{a.allocationPercent}%</td></tr>)}
     </tbody></table></div>
@@ -79,7 +80,7 @@ export function ProjectEnterprise({projectId,lang,writable,tab}:{projectId:strin
    <form className="panel ep-card ep-form" onSubmit={e=>{e.preventDefault();void save("saveResource",{...resource,id:resource.id||undefined,hrUserId:resource.hrUserId||null});}}>
      <h3>{t.resources}</h3><label>{t.name}<input required maxLength={150} value={resource.name} onChange={e=>setResource({...resource,name:e.target.value})}/></label>
      <label>{t.kind}<select value={resource.kind} onChange={e=>setResource({...resource,kind:e.target.value as Resource["kind"]})}>{(["labor","equipment","material"] as const).map(x=><option key={x} value={x}>{t[x]}</option>)}</select></label>
-     <label>{t.hr}<input value={resource.hrUserId} maxLength={100} onChange={e=>setResource({...resource,hrUserId:e.target.value})}/></label>
+     <label>{t.hr}<select value={resource.hrUserId} onChange={e=>setResource({...resource,hrUserId:e.target.value})}><option value="">{t.none}</option>{employees.map(e=><option value={e.userId} key={e.userId}>{e.name}</option>)}</select></label>
      <div className="ep-two"><label>{t.capacity}<input type="number" min={0} max={168} value={resource.capacityHoursWeek} onChange={e=>setResource({...resource,capacityHoursWeek:Number(e.target.value)})}/></label>
      <label>{t.currency}<input required maxLength={3} value={resource.currency} onChange={e=>setResource({...resource,currency:e.target.value.toUpperCase()})}/></label></div>
      <label>{t.rate}<input type="number" min={0} max={2147483647} value={resource.rateMinor} onChange={e=>setResource({...resource,rateMinor:Number(e.target.value)})}/></label>

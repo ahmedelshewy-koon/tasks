@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CalendarDays, Layers3, ListChecks, GitBranch, Pencil, Plus, RotateCcw } from "lucide-react";
-import { request, type Project, type Task } from "./api";
+import { request, type Project, type Task, type Workspace } from "./api";
 import type { Language } from "./i18n";
 import "./planning-view.css";
 import { ProjectControls } from "./project-controls";
@@ -59,7 +59,7 @@ function PreviewTimeline({ preview, activities, lang }: { preview: Preview; acti
   </div>;
 }
 
-export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task[];lang:Language}) {
+export function ProjectPlanning({project,tasks,employees,lang}:{project:Project;tasks:Task[];employees:Workspace["employees"];lang:Language}) {
   const t=text[lang], client=useQueryClient();
   const [tab,setTab]=useState<"wbs"|"activities"|"calendars"|"links"|"control"|"resources"|"costs"|"risks">("wbs");
   const [saving,setSaving]=useState(false),[error,setError]=useState("");
@@ -164,7 +164,7 @@ export function ProjectPlanning({project,tasks,lang}:{project:Project;tasks:Task
           <button className="button primary" type="submit" disabled={saving}><Plus size={14}/>{t.save}</button>
         </form>}
       </div>}
-      {(["resources","costs","risks"] as const).includes(tab as "resources"|"costs"|"risks")&&<ProjectEnterprise projectId={project.id} lang={lang} writable={writable} tab={tab as "resources"|"costs"|"risks"}/>}
+      {(["resources","costs","risks"] as const).includes(tab as "resources"|"costs"|"risks")&&<ProjectEnterprise projectId={project.id} lang={lang} writable={writable} tab={tab as "resources"|"costs"|"risks"} employees={employees.filter(e=>e.userId===project.ownerId||project.memberIds.includes(e.userId))}/>}
       {tab==="control"&&<ProjectControls projectId={project.id} lang={lang} activities={data.activities} writable={writable} planning={{activities:data.activities,wbs:data.wbs,relationships:data.relationships,calendars:data.calendars,baselinesCount:0}}/>} 
       {tab==="calendars"&&<div className="ep-grid">
         <div className="panel ep-card"><h3>{t.calendars} ({data.calendars.length})</h3>{data.calendars.length===0?<p className="ep-muted">{t.empty}</p>:data.calendars.map(c=><div className="ep-calendar" key={c.id}><div><strong>{c.name}</strong><p>{c.timeZone} · {c.minutesPerDay} min</p><p>{c.workingDays.map(d=>t.week[d]).join("، ")}</p>{data.exceptions.filter(x=>x.calendarId===c.id).map(x=><p key={x.id}>{x.day}: {x.isWorking?t.working:t.nonworking} {x.note}</p>)}</div>{writable&&<button type="button" className="ep-icon" onClick={()=>setCalendar({id:c.id,name:c.name,timeZone:c.timeZone,workingDays:c.workingDays,minutesPerDay:c.minutesPerDay})} aria-label={t.edit}><Pencil size={15}/></button>}</div>)}</div>

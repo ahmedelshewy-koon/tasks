@@ -2,7 +2,7 @@ import {and,eq,isNull,sql} from "drizzle-orm";
 import {z} from "zod";
 import * as s from "../../db/schema";
 import type {Database} from "../../db";
-import type {Actor} from "../shared/types";
+import type {Actor,Employee} from "../shared/types";
 import {AppError,requireAccess} from "../shared/types";
 
 const id=z.uuid(),title=z.string().trim().min(1).max(150);
@@ -28,7 +28,7 @@ const riskInput=z.object({
  status:z.enum(["open","mitigating","closed"]).default("open"),
  response:z.string().max(2000).default(""),
 }).strict();
-export function createEnterprisePlanning(db:Database,actor:Actor){
+export function createEnterprisePlanning(db:Database,actor:Actor,directory:Employee[]=[]){
  async function access(tx:Database,projectId:string,write=false){
   const [p]=await tx.select().from(s.projects).where(and(eq(s.projects.id,projectId),isNull(s.projects.deletedAt)));
   if(!p)throw new AppError(404,"Project not found.");
@@ -69,6 +69,13 @@ export function createEnterprisePlanning(db:Database,actor:Actor){
   async saveResource(projectId:string,payload:unknown){
    const v=resourceInput.parse(payload);
    return locked(projectId,async tx=>{
+    if(v.hrUserId){
+     const [project]=await tx.select().from(s.projects).where(eq(s.projects.id,projectId));
+     const members=await tx.select({userId:s.members.userId}).from(s.members).where(eq(s.members.projectId,projectId));
+     const permitted=new Set([project.ownerId,...members.map(m=>m.userId)]);
+     if(!permitted.has(v.hrUserId)||!directory.some(e=>e.userId===v.hrUserId))
+      throw new AppError(400,"HR-linked resource must be a verified member of this project.");
+    }
     const [before]=v.id?await tx.select().from(s.planningResources).where(and(eq(s.planningResources.projectId,projectId),eq(s.planningResources.id,v.id))):[];
     if(v.id&&!before)throw new AppError(404,"Resource not found.");
     const [row]=before?await tx.update(s.planningResources).set(v).where(eq(s.planningResources.id,before.id)).returning():

@@ -7,7 +7,8 @@ import {createEnterprisePlanning} from "../src/modules/planning/enterprise";
 import type {Actor} from "../src/modules/shared/types";
 const client=new PGlite(),db=drizzle(client,{schema});
 const actor=(userId:string):Actor=>({userId,employeeId:userId,isAdmin:false,directReportIds:[]});
-const svc=(id:string)=>createEnterprisePlanning(db,actor(id));
+const directory=[{userId:"owner",employeeId:"owner",name:"Owner",email:"owner@test.invalid",company:"Test",branch:"",department:"",jobTitle:"",managerId:null},{userId:"viewer",employeeId:"viewer",name:"Viewer",email:"viewer@test.invalid",company:"Test",branch:"",department:"",jobTitle:"",managerId:null}];
+const svc=(id:string)=>createEnterprisePlanning(db,actor(id),directory);
 let projectId:string,otherId:string,activityId:string;
 beforeAll(async()=>{
  await migrateDatabase(client);
@@ -19,9 +20,10 @@ beforeAll(async()=>{
 });afterAll(async()=>client.close());
 describe("enterprise resource cost and risk controls",()=>{
  it("stores resources and assignments with strict project references",async()=>{
-  const resource=await svc("owner").saveResource(projectId,{name:"Engineer",kind:"labor",hrUserId:"hr-008",capacityHoursWeek:40,rateMinor:7500,currency:"SAR"});
+  const resource=await svc("owner").saveResource(projectId,{name:"Engineer",kind:"labor",hrUserId:"viewer",capacityHoursWeek:40,rateMinor:7500,currency:"SAR"});
   await svc("owner").saveAssignment(projectId,{activityId,resourceId:resource.id,plannedHours:24,allocationPercent:100});
   expect((await svc("viewer").snapshot(projectId)).assignments).toHaveLength(1);
+  await expect(svc("owner").saveResource(projectId,{name:"Invalid HR",kind:"labor",hrUserId:"not-a-member"})).rejects.toThrow("verified member");
   await expect(svc("owner").saveAssignment(otherId,{activityId,resourceId:resource.id,plannedHours:2,allocationPercent:100})).rejects.toThrow("project");
   await expect(svc("viewer").saveResource(projectId,{name:"Denied",kind:"labor"})).rejects.toThrow();
  });
