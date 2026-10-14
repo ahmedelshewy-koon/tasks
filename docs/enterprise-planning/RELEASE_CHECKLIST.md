@@ -19,13 +19,14 @@ The new `Planning` view is additive; archived projects are read-only.
 8. Risk registry, quality warnings, scoped portfolio summary and CSV export hardened against formula injection.
 9. Tests for PGlite and real isolated PostgreSQL migration upgrades; English desktop/Arabic mobile Playwright smoke.
 10. Project/task hard purge lifecycle adjusted in existing service to safely manage planning foreign keys, with regression tests.
+11. Two-person, auditable **change request and baseline approval** decisions. Requests can be submitted by project managers/owners; decisions require owner or admin, distinct from the requester (and the author for baselines). Approval never automatically modifies a schedule, task or budget. EVM uses only approved baselines.
 
 ## Limits — DO NOT describe this as full Oracle Primavera P6 parity
 - CPM is integer *working-day* scheduling with one common calendar for each preview; per-activity calendars are stored but preview rejects mismatched calendars. Intraday shifts and complex calendar lag semantics are not supported.
 - Only SNET scheduling constraint is supported; P6's other constraint families, data-date actualization, multiple float paths and global change are not implemented.
 - No automatic resource leveling, full capacity optimization or time-phased staffing curve (weekly allocation is an estimate).
 - HR employee ID validation against the live directory and project membership exists; HR leave, timesheets and availability are **not** synced.
-- ERP actuals, approvals, procurement, and cost-center integrations are **not** implemented.
+- ERP actuals, procurement, and cost-center integrations are **not** implemented. Governance approvals are decision records only; executing an approved scope/budget change is an explicit subsequent authorized action.
 - Company/tenant-wide isolation model requires a dedicated security review before a cross-company EPS; portfolio uses only existing visible project data.
 - Primavera XER/P6 XML compatibility **not implemented or claimed**. The available interchange is safe CSV for schedule activities.
 - The app has no committed production release, staging migration, restore-tested company backup or performance guarantee for large portfolios.
@@ -34,14 +35,14 @@ The new `Planning` view is additive; archived projects are read-only.
 - `npm run typecheck`
 - `npm test`
 - `npm run build`
-- Isolated PostgreSQL service: upgrade from schema 0002 to migrations 0003–0008, preserve IDs/dates/comments, rerun idempotently.
+- Isolated PostgreSQL service: upgrade from schema 0002 to migrations 0003–0009, preserve IDs/dates/comments, rerun idempotently.
 - Isolated Playwright smoke using development-only identities, English desktop and Arabic mobile RTL.
 
 ## Manual pre-release gates
 1. Inspect uncommitted local development work; fetch feature branch without overwriting changes.
 2. Create consistent backup of the *actual* target development/staging database and verify restore on a disposable environment.
 3. Check activity counts, task IDs, HR identity links and attachment counts before/after additive migration in staging.
-4. Verify user flows: viewer read-only, project manager edits, finance read restrictions, cross-project isolation, archive/restore/permanent-purge, RTL and mobile.
+4. Verify user flows: viewer read-only, two-person approval and rejection scenarios, project manager edits, finance read restrictions, cross-project isolation, archive/restore/permanent-purge, RTL and mobile.
 5. Benchmark large WBS/activity/relationship graphs, concurrency and resource dashboard performance on PostgreSQL.
 6. Approve rollout plan, rollback application version and monitoring; do not drop additive schema as a rollback shortcut.
 7. Only after explicit operator approval: production backup, reviewed schema rollout, canary project, monitor, then staged feature activation.
