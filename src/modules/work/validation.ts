@@ -31,6 +31,7 @@ export const projectInput = z.object({
   roles: roleMap.default({}),
   startDate: dateValue.optional(),
   dueDate: dateValue.optional(),
+  siteEstimateMinutes: taskFields.siteEstimateMinutes.optional(),
   status: projectFields.status.default("active"),
   sectionNames: z.array(z.string().trim().min(1).max(100)).max(30).default([]),
   templateId: z.uuid().optional(),
