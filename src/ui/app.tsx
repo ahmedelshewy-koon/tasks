@@ -2,6 +2,7 @@
 import { reportIds } from "../modules/hr/hierarchy";
 import { useCallback, useEffect, useState } from "react";
 import { useMobileNavigation } from "./use-navigation";
+import { AssignmentApprovals } from "./assignment-approvals";
 import {
   QueryClient,
   QueryClientProvider,
@@ -300,7 +301,9 @@ function WorkspaceApp({
       { id: "admin", label: "Admin" },
       { id: "profile", label: "Your profile" },
     ].find((n) => n.id === page)?.label || "Dashboard";
-  const unread = data?.notifications.filter((n) => !n.readAt).length || 0;
+  const unread =
+    (data?.notifications.filter((n) => !n.readAt).length || 0) +
+    (data?.assignmentApprovals.length || 0);
   let pageTasks = data?.tasks || [];
   if (page === "my-tasks")
     pageTasks = pageTasks.filter((t) =>
@@ -1042,6 +1045,12 @@ function WorkspaceApp({
                           {t("Mark all as read")}
                         </button>
                       </PageHeading>
+                      <AssignmentApprovals
+                        data={data}
+                        t={t}
+                        lang={lang}
+                        onChanged={refresh}
+                      />
                       <div className="panel notification-list">
                         {!data.notifications.length ? (
                           <Empty
@@ -1081,6 +1090,10 @@ function WorkspaceApp({
                                         update: "Task updated",
                                         upcoming: "Due soon",
                                         overdue: "Overdue task",
+                                        assignment_approved:
+                                          "Assignment approved",
+                                        assignment_rejected:
+                                          "Assignment rejected",
                                       } as Record<string, string>
                                     )[n.kind] || n.kind,
                                   )}

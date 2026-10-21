@@ -133,6 +133,12 @@ export function Login({
                       <option value="local-manager">Local manager</option>
                       <option value="local-employee">Local employee</option>
                       <option value="local-colleague">Local colleague</option>
+                      <option value="local-ops-manager">
+                        Local operations manager
+                      </option>
+                      <option value="local-ops-employee">
+                        Local operations employee
+                      </option>
                     </select>
                   </div>
                 </div>

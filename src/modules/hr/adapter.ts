@@ -68,6 +68,29 @@ export const developmentEmployees: Employee[] = [
     jobTitle: "Team member",
     managerId: "local-manager",
   },
+  // A second department for cross-department assignment approvals.
+  {
+    userId: "local-ops-manager",
+    employeeId: "local-ops-manager",
+    name: "Local operations manager",
+    email: "ops-manager@localhost.test",
+    company: "Local development",
+    branch: "",
+    department: "Operations",
+    jobTitle: "Operations manager",
+    managerId: null,
+  },
+  {
+    userId: "local-ops-employee",
+    employeeId: "local-ops-employee",
+    name: "Local operations employee",
+    email: "ops-employee@localhost.test",
+    company: "Local development",
+    branch: "",
+    department: "Operations",
+    jobTitle: "Operations specialist",
+    managerId: "local-ops-manager",
+  },
 ];
 export function hrAdapter(): HrAdapter {
   if (isDevelopment())
