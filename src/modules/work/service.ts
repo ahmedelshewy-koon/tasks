@@ -30,6 +30,7 @@ import {
 } from "../shared/types";
 import {
   aggregateStatus,
+  assignmentApprover,
   canArchiveTask,
   canComment,
   canContribute,
@@ -429,6 +430,9 @@ export function createService(
     await tx.delete(s.attachments).where(inArray(s.attachments.taskId, ids));
     await tx.delete(s.checklist).where(inArray(s.checklist.taskId, ids));
     await tx.delete(s.assignees).where(inArray(s.assignees.taskId, ids));
+    await tx
+      .delete(s.assignmentRequests)
+      .where(inArray(s.assignmentRequests.taskId, ids));
     await tx.delete(s.taskTags).where(inArray(s.taskTags.taskId, ids));
     await tx.delete(s.fieldValues).where(inArray(s.fieldValues.taskId, ids));
     await tx
@@ -482,6 +486,7 @@ export function createService(
       valueRows,
       viewRows,
       templateRows,
+      requestRows,
     ] = await Promise.all([
       db.select().from(s.projects).where(isNull(s.projects.deletedAt)),
       db.select().from(s.members),
@@ -517,6 +522,10 @@ export function createService(
         .where(eq(s.savedViews.userId, actor.userId))
         .orderBy(s.savedViews.createdAt),
       db.select().from(s.templates).orderBy(desc(s.templates.updatedAt)),
+      db
+        .select()
+        .from(s.assignmentRequests)
+        .orderBy(desc(s.assignmentRequests.createdAt)),
     ]);
     const membersBy = groupBy(ms, (m) => m.projectId);
     const allProjects = ps
@@ -668,10 +677,65 @@ export function createService(
         .filter((p) => projectRole(actor, p) === "project_manager")
         .flatMap((p) => [...memberPool(p)]),
     );
+    const nameOf = (id: string | null) =>
+      directory.find((e) => e.userId === id)?.name ?? null;
+    // Employees a manager may request from other departments, and who approves.
+    const crossAssignable = actor.isAdmin
+      ? []
+      : directory.flatMap((e) => {
+          const approverId = assignmentApprover(actor, e.userId, directory);
+          return approverId
+            ? [{ userId: e.userId, approverId, approverName: nameOf(approverId) }]
+            : [];
+        });
+    const crossIds = new Set(crossAssignable.map((c) => c.userId));
+    const assignedIds = new Set(visible.flatMap((t) => t.assigneeIds));
+    const describeRequest = (r: (typeof requestRows)[number]) => ({
+      id: r.id,
+      taskId: r.taskId,
+      userId: r.userId,
+      userName: nameOf(r.userId),
+      requestedBy: r.requestedBy,
+      requesterName: nameOf(r.requestedBy),
+      approverId: r.approverId,
+      approverName: nameOf(r.approverId),
+      status: r.status,
+      decisionNote: r.decisionNote,
+      reviewedAt: r.reviewedAt,
+      createdAt: r.createdAt,
+    });
     const output = {
       actor,
       today,
       canCreateTemplates,
+      crossAssignable,
+      // Requests waiting for this manager. The task itself stays private until approval.
+      assignmentApprovals: requestRows
+        .filter((r) => {
+          const t = rawById.get(r.taskId);
+          return (
+            r.status === "pending" &&
+            r.approverId === actor.userId &&
+            !!t &&
+            !t.archivedAt
+          );
+        })
+        .map((r) => {
+          const t = rawById.get(r.taskId)!;
+          return {
+            ...describeRequest(r),
+            task: {
+              title: t.title,
+              description: t.description,
+              priority: t.priority,
+              dueDate: t.dueDate,
+            },
+          };
+        }),
+      // Pending and declined requests on tasks the actor can already see.
+      assignmentRequests: requestRows
+        .filter((r) => r.status !== "approved" && activeIds.has(r.taskId))
+        .map(describeRequest),
       // Who each managed project's members may be drawn from (admins: anyone).
       memberPools: Object.fromEntries(
         activeProjects
@@ -683,6 +747,8 @@ export function createService(
           actor.isAdmin ||
           e.userId === actor.userId ||
           reportIds(actor).includes(e.userId) ||
+          crossIds.has(e.userId) ||
+          assignedIds.has(e.userId) ||
           ownerTeams.has(e.userId) ||
           allProjects.some(
             (p) => p.ownerId === e.userId || p.memberIds.includes(e.userId),
@@ -1920,11 +1986,22 @@ export function createService(
         if (!data.dueDate)
           throw new AppError(400, "Recurring tasks need a due date.");
       }
-      validateAssignees(
-        parent && !p ? { ...actor, userId: parent.creatorId } : actor,
-        data.assigneeIds,
-        p,
+      // Employees outside the manager's hierarchy wait for their own manager.
+      const requested = new Map<string, string>();
+      if (!p && !parent)
+        for (const id of new Set(data.assigneeIds)) {
+          const approver = assignmentApprover(actor, id, directory);
+          if (approver) requested.set(id, approver);
+        }
+      const direct = [...new Set(data.assigneeIds)].filter(
+        (id) => !requested.has(id),
       );
+      if (direct.length || !requested.size)
+        validateAssignees(
+          parent && !p ? { ...actor, userId: parent.creatorId } : actor,
+          direct,
+          p,
+        );
       if (data.sectionId) {
         const [section] = await db
           .select()
@@ -1933,7 +2010,7 @@ export function createService(
         if (!section || section.projectId !== data.projectId)
           throw new AppError(400, "Section must belong to the project.");
       }
-      await register([actor.userId, ...data.assigneeIds]);
+      await register([actor.userId, ...data.assigneeIds, ...requested.values()]);
       return db.transaction(async (transaction) => {
         const tx = transaction as unknown as Database;
         if (p) {
@@ -1977,16 +2054,29 @@ export function createService(
             status: data.status === "done" ? "todo" : data.status,
           })
           .returning();
-        await tx.insert(s.assignees).values(
-          [...new Set(data.assigneeIds)].map((userId) => ({
-            taskId: t.id,
-            userId,
-            completed: data.status === "done" && userId === actor.userId,
-          })),
-        );
+        if (direct.length)
+          await tx.insert(s.assignees).values(
+            direct.map((userId) => ({
+              taskId: t.id,
+              userId,
+              completed: data.status === "done" && userId === actor.userId,
+            })),
+          );
         await log(tx, t.id, "task_created", null, { title: t.title });
+        if (requested.size) {
+          await tx.insert(s.assignmentRequests).values(
+            [...requested].map(([userId, approverId]) => ({
+              taskId: t.id,
+              userId,
+              requestedBy: actor.userId,
+              approverId,
+            })),
+          );
+          for (const userId of requested.keys())
+            await log(tx, t.id, "assignment_requested", null, userId);
+        }
         if (data.tags?.length) await applyTags(tx, t.id, data.tags);
-        await notify(tx, t.id, data.assigneeIds, "assignment", t.title);
+        await notify(tx, t.id, direct, "assignment", t.title);
         await recompute(tx, t.id);
         if (parent) await recompute(tx, parent.id);
         return t;
@@ -2184,6 +2274,68 @@ export function createService(
           currentAssignments.map((a) => a.userId),
           "update",
           values.title || fresh.title,
+        );
+        return { id };
+      });
+    },
+    // Only the requested employee's direct manager decides; admins cannot bypass it.
+    async decideAssignment(id: string, input: unknown) {
+      const data = z
+        .object({
+          approve: z.boolean(),
+          note: z.string().trim().max(1000).default(""),
+        })
+        .parse(input);
+      const [request] = await db
+        .select()
+        .from(s.assignmentRequests)
+        .where(eq(s.assignmentRequests.id, id));
+      if (!request) throw new AppError(404, "Assignment request not found.");
+      requireAccess(
+        request.approverId === actor.userId,
+        "Only the employee's direct manager can decide this request.",
+      );
+      return db.transaction(async (transaction) => {
+        const tx = transaction as unknown as Database;
+        const t = await lockTask(tx, request.taskId);
+        const [fresh] = await tx
+          .select()
+          .from(s.assignmentRequests)
+          .where(eq(s.assignmentRequests.id, id));
+        if (fresh.status !== "pending")
+          throw new AppError(409, "This request has already been decided.");
+        if (!t || t.deletedAt) throw new AppError(404, "Task not found.");
+        if (data.approve && t.archivedAt)
+          throw new AppError(
+            409,
+            "This task is archived. Restore it to make changes.",
+          );
+        await tx
+          .update(s.assignmentRequests)
+          .set({
+            status: data.approve ? "approved" : "rejected",
+            reviewedBy: actor.userId,
+            reviewedAt: new Date(),
+            decisionNote: data.note,
+          })
+          .where(eq(s.assignmentRequests.id, id));
+        if (data.approve) {
+          await tx
+            .insert(s.assignees)
+            .values({ taskId: t.id, userId: request.userId })
+            .onConflictDoNothing();
+          await log(tx, t.id, "assignment_approved", null, request.userId);
+          await log(tx, t.id, "assignee_added", null, request.userId);
+          await notify(tx, t.id, [request.userId], "assignment", t.title);
+          await recompute(tx, t.id);
+        } else
+          await log(tx, t.id, "assignment_rejected", null, request.userId);
+        await notify(
+          tx,
+          t.id,
+          [request.requestedBy],
+          data.approve ? "assignment_approved" : "assignment_rejected",
+          t.title,
         );
         return { id };
       });

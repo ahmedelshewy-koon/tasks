@@ -214,6 +214,36 @@ export const notifications = pgTable(
   },
   (t) => [index("notifications_user_idx").on(t.userId)],
 );
+/** Cross-department assignment awaiting the assignee's direct manager. */
+export const assignmentRequests = pgTable(
+  "assignment_requests",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => tasks.id),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id),
+    requestedBy: text("requested_by")
+      .notNull()
+      .references(() => users.id),
+    approverId: text("approver_id")
+      .notNull()
+      .references(() => users.id),
+    status: text("status", { enum: ["pending", "approved", "rejected"] })
+      .notNull()
+      .default("pending"),
+    reviewedBy: text("reviewed_by").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    decisionNote: text("decision_note").notNull().default(""),
+    createdAt: created(),
+  },
+  (t) => [
+    index("assignment_requests_approver_idx").on(t.approverId, t.status),
+    index("assignment_requests_task_idx").on(t.taskId),
+  ],
+);
 export const tags = pgTable("tags", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),

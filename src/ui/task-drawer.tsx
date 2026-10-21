@@ -445,6 +445,25 @@ export function TaskDrawer({
                             </label>
                           </div>
                         ))}
+                        {data.assignmentRequests
+                          .filter((r) => r.taskId === task.id)
+                          .map((r) => (
+                            <div
+                              className="assignee-row request-row"
+                              key={r.id}
+                            >
+                              <Avatar name={r.userName || r.userId} small />
+                              <span>{r.userName || r.userId}</span>
+                              <span
+                                className={`request-status ${r.status}`}
+                                title={r.decisionNote || undefined}
+                              >
+                                {r.status === "pending"
+                                  ? `${t("Awaiting approval from")} ${r.approverName || t("their manager")}`
+                                  : `${t("Rejected")} · ${r.approverName || ""}${r.decisionNote ? `: ${r.decisionNote}` : ""}`}
+                              </span>
+                            </div>
+                          ))}
                       </section>
                       {!task.parentId && (
                         <section className="detail-section">

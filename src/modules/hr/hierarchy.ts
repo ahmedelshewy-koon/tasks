@@ -38,3 +38,15 @@ export function subordinateUserIds(
   }
   return [...descendants];
 }
+
+// The user ID of an employee's direct HR manager, when one is known.
+export function directManagerUserId(
+  userId: string,
+  directory: Employee[],
+): string | null {
+  const employee = directory.find((e) => e.userId === userId);
+  if (!employee?.managerId) return null;
+  return (
+    directory.find((e) => e.employeeId === employee.managerId)?.userId ?? null
+  );
+}

@@ -1,6 +1,7 @@
-import { reportIds } from "../hr/hierarchy";
+import { directManagerUserId, reportIds } from "../hr/hierarchy";
 import {
   type Actor,
+  type Employee,
   type ProjectAccess,
   type ProjectRole,
   type TaskAccess,
@@ -87,6 +88,18 @@ export function canAssignTo(a: Actor, id: string, p: ProjectAccess | null) {
     isAssignable(p, id) &&
     (canManageProject(a, p) || id === a.userId || reportIds(a).includes(id))
   );
+}
+// A manager may request someone outside their own hierarchy for a task without
+// a project; that employee's direct manager approves. Returns the approver, or
+// null when the employee is directly assignable or cannot be requested.
+export function assignmentApprover(
+  a: Actor,
+  id: string,
+  directory: Employee[],
+): string | null {
+  if (canAssignTo(a, id, null) || !reportIds(a).length) return null;
+  const approver = directManagerUserId(id, directory);
+  return approver && approver !== a.userId ? approver : null;
 }
 export function validateAssignees(
   a: Actor,

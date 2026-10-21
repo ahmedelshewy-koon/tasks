@@ -46,6 +46,19 @@ export function TaskForm({
       ? [initialAssigneeId]
       : allowed.some((e) => e.userId === personalOwner) ? [personalOwner] : [],
   );
+  // Managers may request employees from other departments for tasks without a
+  // project; each request waits for that employee's direct manager.
+  const cross = !p && !parent && !siteDispatch ? data.crossAssignable : [];
+  const [requested, setRequested] = useState<string[]>([]);
+  const crossPeople = cross
+    .map((c) => ({
+      ...c,
+      employee: data.employees.find((e) => e.userId === c.userId),
+    }))
+    .filter((c) => c.employee && !requested.includes(c.userId));
+  const crossDepartments = [
+    ...new Set(crossPeople.map((c) => c.employee!.department)),
+  ].sort();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   async function submit(event: FormEvent<HTMLFormElement>) {
@@ -68,9 +81,10 @@ export function TaskForm({
           .split(/[,،]/)
           .map((tag) => tag.trim().replace(/^#/, ""))
           .filter(Boolean),
-        assigneeIds: assigned.filter((id) =>
-          allowed.some((e) => e.userId === id),
-        ),
+        assigneeIds: [
+          ...assigned.filter((id) => allowed.some((e) => e.userId === id)),
+          ...requested.filter((id) => cross.some((c) => c.userId === id)),
+        ],
       });
       onSaved(task.id);
     } catch (e) {
@@ -111,6 +125,7 @@ export function TaskForm({
               onChange={(e) => {
                 setProject(e.target.value);
                 setAssigned(e.target.value ? [] : [data.actor.userId]);
+                setRequested([]);
               }}
             >
               <option value="">{t("No project")}</option>
@@ -195,6 +210,71 @@ export function TaskForm({
             <p className="helper">
               {t("Your projects will appear here when a manager adds you.")}
             </p>
+          )}
+          {cross.length > 0 && (
+            <div className="cross-assign">
+              <Field label={t("Request an employee from another department")}>
+                <select
+                  value=""
+                  onChange={(e) =>
+                    e.target.value &&
+                    setRequested((ids) => [...ids, e.target.value])
+                  }
+                >
+                  <option value="">{t("Choose an employee…")}</option>
+                  {crossDepartments.map((department) => (
+                    <optgroup
+                      key={department}
+                      label={department || t("Other departments")}
+                    >
+                      {crossPeople
+                        .filter((c) => c.employee!.department === department)
+                        .map((c) => (
+                          <option key={c.userId} value={c.userId}>
+                            {c.employee!.name}
+                            {c.employee!.jobTitle
+                              ? ` · ${c.employee!.jobTitle}`
+                              : ""}
+                          </option>
+                        ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </Field>
+              {requested.length > 0 && (
+                <div className="assignee-chips">
+                  {requested.map((id) => {
+                    const c = cross.find((x) => x.userId === id);
+                    const e = data.employees.find((x) => x.userId === id);
+                    return (
+                      <span className="assignee-chip pending-chip" key={id}>
+                        <Avatar small name={e?.name || id} />
+                        <span>{e?.name || id}</span>
+                        <small>
+                          {t("Awaiting approval from")}{" "}
+                          {c?.approverName || t("their manager")}
+                        </small>
+                        <button
+                          type="button"
+                          className="chip-remove"
+                          aria-label={t("Remove")}
+                          onClick={() =>
+                            setRequested((ids) => ids.filter((x) => x !== id))
+                          }
+                        >
+                          ×
+                        </button>
+                      </span>
+                    );
+                  })}
+                </div>
+              )}
+              <p className="helper">
+                {t(
+                  "The employee is added to the task only after their direct manager approves.",
+                )}
+              </p>
+            </div>
           )}
           <p className="helper">
             {t(

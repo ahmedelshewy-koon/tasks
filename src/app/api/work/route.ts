@@ -136,6 +136,9 @@ export async function POST(request: Request) {
       case "updateTask":
         result = await service.updateTask(id.parse(body.id), body.data);
         break;
+      case "decideAssignment":
+        result = await service.decideAssignment(id.parse(body.id), body.data);
+        break;
       case "completePart": {
         const d = z
           .object({ userId: z.string(), completed: z.boolean() })

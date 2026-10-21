@@ -4268,6 +4268,27 @@ html[dir="rtl"] .assignee-chip {
 .task-form .people-field .helper {
   margin-top: 8px;
 }
+.cross-assign {
+  margin-top: 12px;
+}
+.assignee-chip.pending-chip {
+  cursor: default;
+  border-style: dashed;
+  border-color: var(--ds-warning);
+  background: var(--ds-warning-soft);
+}
+.pending-chip small {
+  color: var(--ds-warning-strong);
+}
+.chip-remove {
+  border: 0;
+  background: none;
+  color: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 2px;
+}
 .task-form .form-footer {
   margin-top: 16px;
   padding-top: 16px;
@@ -4415,4 +4436,66 @@ html:not([dir="rtl"]) .back-arrow svg {
   .detail-page-title h1 {
     font-size: 22px;
   }
+}
+
+.assignment-approvals {
+  margin-bottom: 16px;
+}
+.assignment-approvals h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+.approval-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px solid var(--ds-gray-50);
+}
+.approval-main {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+.approval-main p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.approval-main dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin: 10px 0 0;
+  font-size: 12px;
+}
+.approval-main dt {
+  color: var(--muted);
+}
+.approval-main dd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 2px 0 0;
+}
+.approval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 0 1 auto;
+}
+.approval-actions input {
+  min-width: 0;
+  flex: 1 1 180px;
+}
+.request-row .request-status {
+  margin-inline-start: auto;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.request-status.pending {
+  color: var(--ds-warning-strong);
+}
+.request-status.rejected {
+  color: var(--muted);
 }

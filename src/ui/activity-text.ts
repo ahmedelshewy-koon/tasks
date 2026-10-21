@@ -37,6 +37,9 @@ export function activityText(
   switch (event.action) {
     case "assignee_added":
     case "assignee_removed":
+    case "assignment_requested":
+    case "assignment_approved":
+    case "assignment_rejected":
     case "part_completed":
       return person(
         typeof (after ?? before) === "string"
