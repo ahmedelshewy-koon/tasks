@@ -1,13 +1,6 @@
 import { advancedAr, advancedEn } from "./i18n-advanced";
 export type Language = "en" | "ar";
 const ar: Record<string, string> = {
-  "Site job estimate (minutes)":"المدة المتوقعة لمهمة الموقع (بالدقائق)",
-  "Leave empty for no estimate":"اتركه فارغًا إذا كانت المدة غير معروفة",
-  "Site dispatch starts the job now and marks the assigned worker busy until completion.":"إسناد المهمة من لوحة الموقع يبدأ التنفيذ الآن، ويظل الموظف مشغولًا حتى إنهاء مهمته.",
-  "Site job started":"بداية مهمة الموقع",
-  "Estimated site finish":"الانتهاء المتوقع",
-  "Past estimated finish — still busy until completed":"تجاوز الموعد المتوقع — ما زال مشغولًا حتى إنهاء المهمة",
-  "Site Dispatch":"توزيع مهام الموقع",
   "Circular dependencies are not allowed.": "لا يُسمح بالاعتماديات الدائرية.",
   "Dependencies must belong to the same project.":
     "يجب أن تكون الاعتماديات ضمن المشروع نفسه.",

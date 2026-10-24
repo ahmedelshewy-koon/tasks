@@ -1,3 +1,0 @@
-Sanaa Tasks CI/CD production redeploy verification.
-Requested 2026-10-14. This marker is intentionally not imported, executed, or used by the application.
-No application logic or database content changed.

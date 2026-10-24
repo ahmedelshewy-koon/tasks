@@ -420,8 +420,6 @@ export function createService(
   // Removes a task and everything that belongs only to it. Admin-only callers.
   async function purgeTasks(tx: Database, ids: string[]) {
     if (!ids.length) return;
-    // Preserve independent planning activities when an individual task is purged.
-    await tx.update(s.planningActivities).set({ taskId: null }).where(inArray(s.planningActivities.taskId, ids));
     await tx
       .delete(s.notifications)
       .where(inArray(s.notifications.taskId, ids));
@@ -1475,25 +1473,6 @@ export function createService(
           .select({ id: s.tasks.id })
           .from(s.tasks)
           .where(eq(s.tasks.projectId, id));
-        // Explicit permanent project purge: remove dependent planning records in FK order.
-        await tx.delete(s.planningResourceAssignments).where(eq(s.planningResourceAssignments.projectId, id));
-        await tx.delete(s.planningProgress).where(eq(s.planningProgress.projectId, id));
-        await tx.delete(s.planningRelationships).where(eq(s.planningRelationships.projectId, id));
-        await tx.delete(s.planningCostItems).where(eq(s.planningCostItems.projectId, id));
-        await tx.delete(s.planningRisks).where(eq(s.planningRisks.projectId, id));
-        await tx.delete(s.planningChangeRequests).where(eq(s.planningChangeRequests.projectId,id));
-        await tx.delete(s.planningBaselineReviews).where(eq(s.planningBaselineReviews.projectId,id));
-        await tx.delete(s.planningBaselines).where(eq(s.planningBaselines.projectId, id));
-        await tx.delete(s.planningActivities).where(eq(s.planningActivities.projectId, id));
-        const calendars = await tx.select({id:s.planningCalendars.id})
-          .from(s.planningCalendars).where(eq(s.planningCalendars.projectId, id));
-        if (calendars.length) await tx.delete(s.planningCalendarExceptions)
-          .where(inArray(s.planningCalendarExceptions.calendarId,calendars.map(c=>c.id)));
-        await tx.delete(s.planningResources).where(eq(s.planningResources.projectId, id));
-        await tx.delete(s.planningCalendars).where(eq(s.planningCalendars.projectId, id));
-        // Break self-referential WBS parent links before bulk deletion.
-        await tx.update(s.planningWbs).set({parentId:null}).where(eq(s.planningWbs.projectId,id));
-        await tx.delete(s.planningWbs).where(eq(s.planningWbs.projectId,id));
         await purgeTasks(
           tx,
           rows.map((r) => r.id),
@@ -1975,11 +1954,6 @@ export function createService(
         if (parent.projectId !== (data.projectId || null))
           throw new AppError(400, "Subtasks must use the parent project.");
       }
-      if (data.siteDispatch) {
-        requireAccess(!!p && canManageProject(actor,p),"Only project managers can dispatch site jobs.");
-        if (data.assigneeIds.length!==1 || !data.siteEstimateMinutes || data.status!=="in_progress")
-          throw new AppError(400,"Site dispatch needs one worker, a duration, and in-progress status.");
-      }
       if (data.recurrence) {
         if (data.parentId)
           throw new AppError(400, "Only top-level tasks can repeat.");
@@ -2024,18 +1998,6 @@ export function createService(
             sql`select id from tasks where id = ${parent.id} for update`,
           );
         if (parent) await task(parent.id, true, tx);
-        if (data.siteDispatch) {
-          // Serialize simultaneous site dispatches for the same employee across projects.
-          const workerId=data.assigneeIds[0];
-          await tx.execute(sql`select id from users where id = ${workerId} for update`);
-          const active=await tx.select({id:s.tasks.id})
-            .from(s.assignees).innerJoin(s.tasks,eq(s.assignees.taskId,s.tasks.id))
-            .where(and(eq(s.assignees.userId,workerId),eq(s.assignees.completed,false),
-              eq(s.tasks.status,"in_progress"),isNull(s.tasks.archivedAt),isNull(s.tasks.deletedAt)))
-            .limit(1);
-          if(active.length)throw new AppError(409,"This worker is busy on an active job. Select another worker.");
-        }
-        const siteNow=data.status==="in_progress"?new Date():null;
         const [t] = await tx
           .insert(s.tasks)
           .values({
@@ -2048,9 +2010,6 @@ export function createService(
             priority: data.priority,
             dueDate: data.dueDate,
             recurrence: data.recurrence ?? null,
-            siteEstimateMinutes: data.siteEstimateMinutes??null,
-            siteStartedAt: siteNow,
-            siteExpectedEndAt: siteNow&&data.siteEstimateMinutes ? new Date(siteNow.getTime()+data.siteEstimateMinutes*60_000):null,
             status: data.status === "done" ? "todo" : data.status,
           })
           .returning();
@@ -2159,22 +2118,10 @@ export function createService(
         if (recurrence && !due)
           throw new AppError(400, "Recurring tasks need a due date.");
         const { assigneeIds, status, ...values } = data;
-        const nextStatus=status??fresh.status;
-        const start=nextStatus==="in_progress"
-          ? (fresh.status==="in_progress"?(fresh.siteStartedAt??new Date()):new Date())
-          : fresh.siteStartedAt;
-        const estimate=data.siteEstimateMinutes===undefined?fresh.siteEstimateMinutes:data.siteEstimateMinutes;
-        const siteUpdate={
-          ...(nextStatus==="in_progress"?{siteStartedAt:start}:{}),
-          ...(data.siteEstimateMinutes!==undefined || (status==="in_progress"&&fresh.status!=="in_progress")
-            ? {siteExpectedEndAt:nextStatus==="in_progress"&&start&&estimate?new Date(start.getTime()+estimate*60_000):null}
-            : {}),
-        };
         await tx
           .update(s.tasks)
           .set({
             ...values,
-            ...siteUpdate,
             updatedAt: new Date(),
             ...(status && status !== "done" ? { status } : {}),
           })
@@ -2186,7 +2133,6 @@ export function createService(
           "dueDate",
           "sectionId",
           "recurrence",
-          "siteEstimateMinutes",
         ] as const) {
           if (data[field] !== undefined && data[field] !== fresh[field])
             await log(
